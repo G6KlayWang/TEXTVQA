@@ -5,6 +5,7 @@ gradient_accumulation_steps: 4  # with 4 GPUs, global batch = 1 * 4 * 4 = 16
 learning_rate: 1.0e-4
 lr_scheduler_type: cosine
 warmup_ratio: 0.03
+warmup_steps: null
 weight_decay: 0.0
 bf16: true
 gradient_checkpointing: true

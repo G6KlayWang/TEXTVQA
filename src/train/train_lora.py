@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 import shutil
 from pathlib import Path
 
@@ -36,6 +37,29 @@ def split_train_eval(dataset: ProcessedTextVQADataset, holdout: int):
     return Subset(dataset, train_indices), Subset(dataset, eval_indices)
 
 
+def disable_cache(model) -> None:
+    for target in (model, getattr(model, "base_model", None), getattr(model, "model", None)):
+        if target is not None and hasattr(target, "config"):
+            target.config.use_cache = False
+    if hasattr(model, "generation_config"):
+        model.generation_config.use_cache = False
+
+
+def compute_warmup_steps(train_config: dict, train_dataset, process) -> int:
+    explicit = train_config.get("warmup_steps")
+    if explicit not in (None, "null"):
+        return int(explicit)
+    ratio = float(train_config.get("warmup_ratio", 0.0) or 0.0)
+    if ratio <= 0:
+        return 0
+    per_device_batch = int(train_config["per_device_train_batch_size"])
+    grad_accum = int(train_config["gradient_accumulation_steps"])
+    epochs = float(train_config["num_train_epochs"])
+    world_size = max(int(getattr(process, "world_size", 1)), 1)
+    updates_per_epoch = math.ceil(len(train_dataset) / max(per_device_batch * grad_accum * world_size, 1))
+    return max(1, math.ceil(updates_per_epoch * epochs * ratio))
+
+
 def main() -> None:
     args = parse_args()
     process = current_process()
@@ -58,6 +82,7 @@ def main() -> None:
 
     model, processor = load_qwen_model_and_processor(model_config, for_training=True)
     model = apply_lora(model, lora_config)
+    disable_cache(model)
     if train_config.get("gradient_checkpointing", False) and hasattr(model, "enable_input_require_grads"):
         model.enable_input_require_grads()
 
@@ -76,7 +101,7 @@ def main() -> None:
         "gradient_accumulation_steps": int(train_config["gradient_accumulation_steps"]),
         "learning_rate": float(train_config["learning_rate"]),
         "lr_scheduler_type": train_config.get("lr_scheduler_type", "cosine"),
-        "warmup_ratio": float(train_config.get("warmup_ratio", 0.0)),
+        "warmup_steps": compute_warmup_steps(train_config, train_dataset, process),
         "weight_decay": float(train_config.get("weight_decay", 0.0)),
         "bf16": bool(train_config.get("bf16", False)),
         "gradient_checkpointing": bool(train_config.get("gradient_checkpointing", False)),

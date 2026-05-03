@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Any
 
 
@@ -32,6 +33,6 @@ def apply_lora(model, config: dict[str, Any]):
         modules_to_save=list(config.get("modules_to_save") or []),
     )
     model = get_peft_model(model, lora_config)
-    model.print_trainable_parameters()
+    if int(os.environ.get("RANK", "0")) == 0:
+        model.print_trainable_parameters()
     return model
-
