@@ -16,6 +16,6 @@ scikit-learn>=1.4
 seaborn>=0.13
 tensorboard>=2.16
 torch>=2.3
+torchvision>=0.18
 tqdm>=4.66
 transformers>=4.49
-

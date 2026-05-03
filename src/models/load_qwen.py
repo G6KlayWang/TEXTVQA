@@ -6,6 +6,9 @@ from typing import Any
 from src.utils.config import parse_pixel_expr
 
 
+os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
+
+
 def torch_dtype(name: str | None):
     import torch
 
@@ -31,6 +34,16 @@ def processor_kwargs(config: dict[str, Any]) -> dict[str, Any]:
 
 
 def load_qwen_model_and_processor(config: dict[str, Any], for_training: bool = False):
+    try:
+        import torchvision  # noqa: F401
+    except ImportError as exc:
+        raise SystemExit(
+            "Qwen2.5-VL processor requires `torchvision` through Transformers' video processor.\n"
+            "Install it in the active environment, then rerun the script:\n"
+            "  python -m pip install torchvision\n"
+            "If your PyTorch was installed from a CUDA-specific index, install the matching torchvision build."
+        ) from exc
+
     try:
         from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
     except ImportError as exc:
