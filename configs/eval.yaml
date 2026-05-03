@@ -17,3 +17,4 @@ llm_judge:
   prompt_template: src/eval/templates/judge_v1.txt
   max_samples: 200
 batch_size: 1
+dataloader_num_workers: 2

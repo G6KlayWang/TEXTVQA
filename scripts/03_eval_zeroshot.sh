@@ -2,6 +2,8 @@
 set -euo pipefail
 
 NUM_GPUS="${NUM_GPUS:-4}"
+EVAL_NUM_WORKERS="${EVAL_NUM_WORKERS:-2}"
+export EVAL_NUM_WORKERS
 
 accelerate launch --num_processes "$NUM_GPUS" -m src.inference.run_zeroshot \
   --model_config configs/model_qwen25vl.yaml \
