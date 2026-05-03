@@ -17,6 +17,20 @@ bash scripts/run_all.sh
 
 The full run downloads the dataset, preprocesses images, evaluates the base model, trains LoRA, evaluates the adapter, runs ablations, and generates report artifacts.
 
+GPU-heavy stages use 4 GPUs by default through Accelerate. Override this with `NUM_GPUS`:
+
+```bash
+NUM_GPUS=2 bash scripts/03_eval_zeroshot.sh --max_samples 100
+NUM_GPUS=4 bash scripts/04_train_lora.sh
+```
+
+Preprocessing is CPU/I/O-bound and uses 8 CPU workers by default. Override this with:
+
+```bash
+PREPROCESS_NUM_WORKERS=16 bash scripts/02_preprocess.sh
+python -m src.data.preprocess --config configs/data.yaml --num_workers 16
+```
+
 ## Stage-by-Stage
 
 ```bash

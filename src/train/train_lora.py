@@ -9,6 +9,7 @@ from src.models.load_qwen import load_qwen_model_and_processor
 from src.models.lora_setup import apply_lora
 from src.train.collator import QwenVLCollator
 from src.utils.config import ensure_dir, load_yaml
+from src.utils.distributed import current_process
 from src.utils.io import write_json
 from src.utils.repro import config_snapshot, seed_everything
 
@@ -37,6 +38,7 @@ def split_train_eval(dataset: ProcessedTextVQADataset, holdout: int):
 
 def main() -> None:
     args = parse_args()
+    process = current_process()
     model_config = load_yaml(args.model_config)
     lora_config = load_yaml(args.lora_config)
     train_config = load_yaml(args.train_config)
@@ -84,6 +86,9 @@ def main() -> None:
         "report_to": report_to,
         "remove_unused_columns": False,
         "seed": int(train_config.get("seed", 42)),
+        "dataloader_num_workers": int(train_config.get("dataloader_num_workers", 4)),
+        "dataloader_pin_memory": bool(train_config.get("dataloader_pin_memory", True)),
+        "ddp_find_unused_parameters": bool(train_config.get("ddp_find_unused_parameters", False)),
     }
     if eval_dataset is not None:
         training_kwargs["eval_steps"] = int(train_config.get("eval_steps", 500))
@@ -103,17 +108,20 @@ def main() -> None:
     )
     trainer.train()
 
-    best_dir = output_dir / "best"
-    if best_dir.exists():
-        shutil.rmtree(best_dir)
-    best_dir.mkdir(parents=True, exist_ok=True)
-    model.save_pretrained(best_dir)
-    processor.save_pretrained(best_dir)
-    write_json(
-        config_snapshot(model=model_config, lora=lora_config, train=train_config, data=data_config),
-        output_dir / "training_manifest.json",
-    )
-    print(f"Saved LoRA adapter and processor to {best_dir}")
+    process.wait()
+    if process.is_main:
+        best_dir = output_dir / "best"
+        if best_dir.exists():
+            shutil.rmtree(best_dir)
+        best_dir.mkdir(parents=True, exist_ok=True)
+        model.save_pretrained(best_dir)
+        processor.save_pretrained(best_dir)
+        write_json(
+            config_snapshot(model=model_config, lora=lora_config, train=train_config, data=data_config),
+            output_dir / "training_manifest.json",
+        )
+        print(f"Saved LoRA adapter and processor to {best_dir}")
+    process.wait()
 
 
 if __name__ == "__main__":

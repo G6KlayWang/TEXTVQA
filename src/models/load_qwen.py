@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from src.utils.config import parse_pixel_expr
@@ -38,10 +39,18 @@ def load_qwen_model_and_processor(config: dict[str, Any], for_training: bool = F
     model_id = config["model_id"]
     processor = AutoProcessor.from_pretrained(model_id, **processor_kwargs(config))
 
+    device_map = config.get("device_map", "auto")
+    distributed = int(os.environ.get("WORLD_SIZE", "1")) > 1
+    if distributed and for_training and not config.get("load_in_4bit"):
+        device_map = None
+    elif distributed and device_map == "auto":
+        device_map = {"": int(os.environ.get("LOCAL_RANK", "0"))}
+
     model_kwargs: dict[str, Any] = {
         "torch_dtype": torch_dtype(config.get("dtype")),
-        "device_map": config.get("device_map", "auto"),
     }
+    if device_map is not None:
+        model_kwargs["device_map"] = device_map
     if config.get("attn_implementation"):
         model_kwargs["attn_implementation"] = config["attn_implementation"]
 
@@ -68,4 +77,3 @@ def load_qwen_model_and_processor(config: dict[str, Any], for_training: bool = F
     if for_training:
         model.config.use_cache = False
     return model, processor
-

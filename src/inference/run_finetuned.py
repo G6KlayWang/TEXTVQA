@@ -7,6 +7,7 @@ from src.data.dataset import ProcessedTextVQADataset, processed_path
 from src.inference.generate import QwenGenerator, load_prompt_template, render_prompt
 from src.models.load_qwen import load_qwen_model_and_processor
 from src.utils.config import load_yaml
+from src.utils.distributed import cleanup_parts, current_process, merge_jsonl_parts, part_path, shard_indices
 from src.utils.io import write_jsonl
 
 
@@ -24,6 +25,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    process = current_process()
     try:
         from peft import PeftModel
     except ImportError as exc:
@@ -43,13 +45,28 @@ def main() -> None:
     decoding = clean_decoding(eval_config.get("decoding", {}))
     rows = []
     limit = len(dataset) if args.max_samples is None else min(args.max_samples, len(dataset))
-    for idx in tqdm(range(limit), desc="finetuned"):
+    indices = list(shard_indices(limit, process.rank, process.world_size))
+    for idx in tqdm(indices, desc=f"finetuned rank {process.rank}", disable=not process.is_main):
         sample = dataset[idx]
         prompt = render_prompt(template, sample)
         prediction = generator.generate_one(sample, prompt, decoding)
-        rows.append({k: sample[k] for k in sample if k != "image"} | {"prediction": prediction, "prompt": prompt})
-    write_jsonl(rows, args.output)
-    print(f"Wrote {len(rows)} predictions to {args.output}")
+        rows.append(
+            {k: sample[k] for k in sample if k != "image"}
+            | {"prediction": prediction, "prompt": prompt, "_index": idx}
+        )
+    if process.distributed:
+        write_jsonl(rows, part_path(args.output, process.rank))
+        process.wait()
+        if process.is_main:
+            merge_jsonl_parts(args.output, process.world_size)
+            cleanup_parts(args.output, range(process.world_size))
+            print(f"Wrote {limit} merged predictions to {args.output}")
+        process.wait()
+    else:
+        for row in rows:
+            row.pop("_index", None)
+        write_jsonl(rows, args.output)
+        print(f"Wrote {len(rows)} predictions to {args.output}")
 
 
 if __name__ == "__main__":

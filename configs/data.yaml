@@ -5,4 +5,4 @@ processed_dir: artifacts/data/processed
 max_train_samples: null
 max_val_samples: null
 image_size: 448
-
+preprocess_num_workers: 8
