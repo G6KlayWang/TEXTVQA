@@ -1,0 +1,8 @@
+You are judging whether a TextVQA model prediction is semantically equivalent to any ground-truth answer.
+
+Question: {question}
+Ground-truth answers: {answers}
+Prediction: {prediction}
+
+Return only a JSON object with keys "score" and "reason". The score must be a number from 0 to 1.
+

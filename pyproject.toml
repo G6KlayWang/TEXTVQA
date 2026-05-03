@@ -1,0 +1,14 @@
+[project]
+name = "textvqa-final-project"
+version = "0.1.0"
+description = "TextVQA zero-shot, LoRA fine-tuning, ablations, and analysis for a VLM final project."
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+

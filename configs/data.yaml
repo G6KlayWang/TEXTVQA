@@ -1,0 +1,8 @@
+hf_id: lmms-lab/textvqa
+splits: [train, validation]
+cache_dir: artifacts/data/raw
+processed_dir: artifacts/data/processed
+max_train_samples: null
+max_val_samples: null
+image_size: 448
+

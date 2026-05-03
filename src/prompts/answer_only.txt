@@ -1,0 +1,3 @@
+Question: {question}
+Answer with the shortest correct text from the image. Do not explain.
+

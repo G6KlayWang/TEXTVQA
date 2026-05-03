@@ -1,0 +1,4 @@
+Carefully read all visible text in the image before answering.
+Question: {question}
+Return only the short answer. Do not explain.
+
