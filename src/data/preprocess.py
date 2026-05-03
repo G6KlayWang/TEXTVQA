@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import re
 from pathlib import Path
 from typing import Any
@@ -10,6 +11,9 @@ from PIL import Image
 from src.data.dataset import normalize_raw_row, split_alias
 from src.utils.config import ensure_dir, load_yaml
 from src.utils.io import write_json, write_jsonl
+
+
+os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
 
 
 SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9_.-]+")
@@ -31,7 +35,8 @@ def load_dataset_from_config(config: dict[str, Any]):
 
     if dataset_dir.exists():
         return load_from_disk(str(dataset_dir))
-    return load_dataset(config["hf_id"], cache_dir=config["cache_dir"])
+    selected_splits = config.get("splits") or ["train", "validation"]
+    return {split: load_dataset(config["hf_id"], split=split, cache_dir=config["cache_dir"]) for split in selected_splits}
 
 
 def get_image(row: dict[str, Any]) -> Image.Image:
@@ -110,4 +115,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 
 from src.utils.config import ensure_dir, load_yaml
 from src.utils.io import write_json
+
+
+os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
 
 
 def parse_args() -> argparse.Namespace:
@@ -25,17 +29,28 @@ def main() -> None:
         return
 
     try:
-        from datasets import load_dataset
+        from datasets import DatasetDict, load_dataset
     except ImportError as exc:
         raise SystemExit("Install the `datasets` package before downloading TextVQA.") from exc
 
-    dataset = load_dataset(config["hf_id"], cache_dir=str(cache_dir))
-    selected_splits = config.get("splits") or list(dataset.keys())
-    selected = {split: dataset[split] for split in selected_splits if split in dataset}
-    if not selected:
-        raise SystemExit(f"No requested splits found. Requested={selected_splits}; available={list(dataset.keys())}")
+    selected_splits = config.get("splits") or ["train", "validation"]
+    selected = {}
+    for split in selected_splits:
+        print(f"Downloading split: {split}")
+        try:
+            selected[split] = load_dataset(config["hf_id"], split=split, cache_dir=str(cache_dir))
+        except Exception as exc:
+            raise SystemExit(
+                f"Failed to download split `{split}` from {config['hf_id']}.\n"
+                "If Hugging Face Hub returns a CAS/Xet 401 error, run:\n"
+                "  export HF_HUB_DISABLE_XET=1\n"
+                "If the dataset is rate-limited, also run:\n"
+                "  huggingface-cli login\n"
+                "or set HF_TOKEN in your environment."
+            ) from exc
 
-    from datasets import DatasetDict
+    if not selected:
+        raise SystemExit(f"No requested splits found. Requested={selected_splits}")
 
     DatasetDict(selected).save_to_disk(str(dataset_dir))
     write_json(
@@ -51,4 +66,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
