@@ -3,7 +3,9 @@ set -euo pipefail
 
 NUM_GPUS="${NUM_GPUS:-4}"
 PREPROCESS_NUM_WORKERS="${PREPROCESS_NUM_WORKERS:-8}"
+EVAL_NUM_WORKERS="${EVAL_NUM_WORKERS:-2}"
 export HF_HUB_DISABLE_XET="${HF_HUB_DISABLE_XET:-1}"
+export EVAL_NUM_WORKERS
 
 python -m src.models.cache_model --model_config configs/model_qwen25vl.yaml
 export HF_HUB_OFFLINE=1

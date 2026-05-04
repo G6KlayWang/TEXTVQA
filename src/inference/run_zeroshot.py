@@ -54,11 +54,11 @@ def collate_samples(batch: list[dict]) -> list[dict]:
     return batch
 
 
-def progress(iterable, *, total: int, process, show_all: bool):
+def progress(iterable, *, total: int, process, show_all: bool, label: str = "zero-shot"):
     return tqdm(
         iterable,
         total=total,
-        desc=f"zero-shot rank {process.rank}/{process.world_size}",
+        desc=f"{label} rank {process.rank}/{process.world_size}",
         unit="sample",
         dynamic_ncols=True,
         position=process.rank if show_all else 0,
@@ -111,7 +111,7 @@ def main() -> None:
         collate_fn=collate_samples,
         persistent_workers=num_workers > 0,
     )
-    with progress(loader, total=len(indices), process=process, show_all=show_all_progress) as pbar:
+    with progress(loader, total=len(indices), process=process, show_all=show_all_progress, label="zero-shot") as pbar:
         for batch in pbar:
             for sample in batch:
                 idx = sample["_index"]
