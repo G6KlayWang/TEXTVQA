@@ -31,6 +31,7 @@ def main() -> None:
             token=os.environ.get("HF_TOKEN") or None,
             allow_patterns=[
                 "*.json",
+                "*.jinja",
                 "*.safetensors",
                 "*.txt",
                 "*.model",
@@ -58,4 +59,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

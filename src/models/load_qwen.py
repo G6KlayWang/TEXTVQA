@@ -33,6 +33,12 @@ def processor_kwargs(config: dict[str, Any]) -> dict[str, Any]:
     return kwargs
 
 
+def local_files_only(config: dict[str, Any]) -> bool:
+    if "local_files_only" in config:
+        return bool(config["local_files_only"])
+    return os.environ.get("TRANSFORMERS_OFFLINE") == "1" or os.environ.get("HF_HUB_OFFLINE") == "1"
+
+
 def load_qwen_model_and_processor(config: dict[str, Any], for_training: bool = False):
     try:
         import torchvision  # noqa: F401
@@ -50,7 +56,12 @@ def load_qwen_model_and_processor(config: dict[str, Any], for_training: bool = F
         raise SystemExit("Install `transformers>=4.49` before loading Qwen2.5-VL.") from exc
 
     model_id = config["model_id"]
-    processor = AutoProcessor.from_pretrained(model_id, **processor_kwargs(config))
+    offline = local_files_only(config)
+    processor = AutoProcessor.from_pretrained(
+        model_id,
+        local_files_only=offline,
+        **processor_kwargs(config),
+    )
 
     device_map = config.get("device_map", "auto")
     distributed = int(os.environ.get("WORLD_SIZE", "1")) > 1
@@ -61,6 +72,7 @@ def load_qwen_model_and_processor(config: dict[str, Any], for_training: bool = F
 
     model_kwargs: dict[str, Any] = {
         "torch_dtype": torch_dtype(config.get("dtype")),
+        "local_files_only": offline,
     }
     if device_map is not None:
         model_kwargs["device_map"] = device_map

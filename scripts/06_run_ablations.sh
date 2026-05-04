@@ -6,6 +6,8 @@ PREPROCESS_NUM_WORKERS="${PREPROCESS_NUM_WORKERS:-8}"
 export HF_HUB_DISABLE_XET="${HF_HUB_DISABLE_XET:-1}"
 
 python -m src.models.cache_model --model_config configs/model_qwen25vl.yaml
+export HF_HUB_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
 
 echo "Running attention-only LoRA ablation"
 accelerate launch --num_processes "$NUM_GPUS" -m src.train.train_lora \
