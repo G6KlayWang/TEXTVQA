@@ -1,0 +1,428 @@
+{
+  "n": 5000,
+  "textvqa_accuracy": 0.6858,
+  "exact_match": 0.7262,
+  "f1_token": 0.771826160740917,
+  "bleu": 14.2195395905606,
+  "meteor": 0.4954660181145716,
+  "rouge1": 0.6158982821622819,
+  "rouge2": 0.18496395819156652,
+  "rougeL": 0.6155278059718057,
+  "per_question_type": {
+    "\"do": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "/?what": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "15:20": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "1974": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "3": {
+      "n": 1,
+      "textvqa_accuracy": 0.0
+    },
+    "according": {
+      "n": 3,
+      "textvqa_accuracy": 1.0
+    },
+    "all": {
+      "n": 1,
+      "textvqa_accuracy": 0.0
+    },
+    "always": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "are": {
+      "n": 39,
+      "textvqa_accuracy": 0.9059829059829061
+    },
+    "at": {
+      "n": 1,
+      "textvqa_accuracy": 0.3333333333333333
+    },
+    "between": {
+      "n": 1,
+      "textvqa_accuracy": 0.0
+    },
+    "blue": {
+      "n": 1,
+      "textvqa_accuracy": 0.0
+    },
+    "book": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "brand": {
+      "n": 1,
+      "textvqa_accuracy": 0.0
+    },
+    "can": {
+      "n": 8,
+      "textvqa_accuracy": 1.0
+    },
+    "cannot": {
+      "n": 1,
+      "textvqa_accuracy": 0.0
+    },
+    "city": {
+      "n": 1,
+      "textvqa_accuracy": 0.0
+    },
+    "coins": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "continuing": {
+      "n": 1,
+      "textvqa_accuracy": 0.0
+    },
+    "could": {
+      "n": 2,
+      "textvqa_accuracy": 0.0
+    },
+    "creating": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "did": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "do": {
+      "n": 8,
+      "textvqa_accuracy": 0.875
+    },
+    "does": {
+      "n": 42,
+      "textvqa_accuracy": 0.8650793650793651
+    },
+    "early": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "em": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "every": {
+      "n": 1,
+      "textvqa_accuracy": 0.0
+    },
+    "first": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "from": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "get": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "great": {
+      "n": 2,
+      "textvqa_accuracy": 0.5
+    },
+    "hat": {
+      "n": 1,
+      "textvqa_accuracy": 0.0
+    },
+    "have": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "how": {
+      "n": 184,
+      "textvqa_accuracy": 0.6503623188405797
+    },
+    "hurt": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "i": {
+      "n": 3,
+      "textvqa_accuracy": 0.3333333333333333
+    },
+    "ia": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "if": {
+      "n": 3,
+      "textvqa_accuracy": 0.7777777777777778
+    },
+    "in": {
+      "n": 10,
+      "textvqa_accuracy": 0.7333333333333333
+    },
+    "is": {
+      "n": 162,
+      "textvqa_accuracy": 0.8888888888888888
+    },
+    "it": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "it's": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "its": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "justice": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "little": {
+      "n": 1,
+      "textvqa_accuracy": 0.0
+    },
+    "live": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "london": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "look": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "looking": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "lunch": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "more": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "name": {
+      "n": 3,
+      "textvqa_accuracy": 0.2222222222222222
+    },
+    "now": {
+      "n": 2,
+      "textvqa_accuracy": 0.0
+    },
+    "on": {
+      "n": 3,
+      "textvqa_accuracy": 0.6666666666666666
+    },
+    "preload": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "ptros": {
+      "n": 1,
+      "textvqa_accuracy": 0.3333333333333333
+    },
+    "riesling": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "should": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "street": {
+      "n": 1,
+      "textvqa_accuracy": 0.3333333333333333
+    },
+    "surf": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "text": {
+      "n": 2,
+      "textvqa_accuracy": 1.0
+    },
+    "that": {
+      "n": 2,
+      "textvqa_accuracy": 1.0
+    },
+    "the": {
+      "n": 16,
+      "textvqa_accuracy": 0.8333333333333334
+    },
+    "this": {
+      "n": 27,
+      "textvqa_accuracy": 0.8888888888888888
+    },
+    "three": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "title": {
+      "n": 1,
+      "textvqa_accuracy": 0.0
+    },
+    "tourist": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "two": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "waching": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "waht": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "was": {
+      "n": 4,
+      "textvqa_accuracy": 1.0
+    },
+    "wha": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "what": {
+      "n": 3847,
+      "textvqa_accuracy": 0.6646737717702106
+    },
+    "what's": {
+      "n": 58,
+      "textvqa_accuracy": 0.6666666666666666
+    },
+    "what`s": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "whats": {
+      "n": 22,
+      "textvqa_accuracy": 0.7272727272727273
+    },
+    "what´s": {
+      "n": 4,
+      "textvqa_accuracy": 0.75
+    },
+    "when": {
+      "n": 36,
+      "textvqa_accuracy": 0.7407407407407408
+    },
+    "where": {
+      "n": 89,
+      "textvqa_accuracy": 0.6928838951310862
+    },
+    "which": {
+      "n": 100,
+      "textvqa_accuracy": 0.6866666666666668
+    },
+    "who": {
+      "n": 226,
+      "textvqa_accuracy": 0.7654867256637168
+    },
+    "who's": {
+      "n": 10,
+      "textvqa_accuracy": 0.8
+    },
+    "whom": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "whon": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "whos": {
+      "n": 3,
+      "textvqa_accuracy": 1.0
+    },
+    "whose": {
+      "n": 9,
+      "textvqa_accuracy": 0.7777777777777778
+    },
+    "why": {
+      "n": 8,
+      "textvqa_accuracy": 0.75
+    },
+    "will": {
+      "n": 2,
+      "textvqa_accuracy": 1.0
+    },
+    "with": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "would": {
+      "n": 1,
+      "textvqa_accuracy": 0.3333333333333333
+    },
+    "wow": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "wwhat": {
+      "n": 1,
+      "textvqa_accuracy": 0.0
+    },
+    "yes": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    },
+    "you": {
+      "n": 1,
+      "textvqa_accuracy": 1.0
+    }
+  },
+  "llm_judge": null,
+  "llm_judge_status": {
+    "enabled": false,
+    "mean_score": null,
+    "error": "OPENAI_API_KEY is not set",
+    "samples": []
+  },
+  "tag": "zero_shot",
+  "prediction_file": "artifacts/predictions/zero_shot_val.jsonl",
+  "snapshot": {
+    "commit": "0546fe3bb6b4cb472268ff04395b8803eb79ef82",
+    "configs": {
+      "eval": {
+        "prompt_template": "src/prompts/answer_only.txt",
+        "decoding": {
+          "max_new_tokens": 32,
+          "do_sample": false,
+          "temperature": 0.0
+        },
+        "metrics": [
+          "textvqa_accuracy",
+          "exact_match",
+          "bleu",
+          "meteor",
+          "rouge",
+          "f1_token",
+          "llm_judge"
+        ],
+        "llm_judge": {
+          "enabled": true,
+          "model": "gpt-4o-mini",
+          "prompt_template": "src/eval/templates/judge_v1.txt",
+          "max_samples": 200
+        },
+        "batch_size": 1,
+        "dataloader_num_workers": 2
+      }
+    }
+  }
+}

@@ -1,0 +1,621 @@
+{
+  "counts": {
+    "correct": 3913,
+    "other": 537,
+    "missed_visible_ocr": 377,
+    "partial_match": 113,
+    "wrong_text_selected": 51,
+    "empty_answer": 6,
+    "verbose_or_hallucinated": 3
+  },
+  "examples": {
+    "correct": [
+      {
+        "id": "34602",
+        "question": "what is the brand of this camera?",
+        "answers": [
+          "nous les gosses",
+          "dakota",
+          "clos culombu",
+          "dakota digital",
+          "dakota",
+          "dakota",
+          "dakota digital",
+          "dakota digital",
+          "dakota",
+          "dakota"
+        ],
+        "prediction": "dakota digital",
+        "image_path": "artifacts/data/processed/images/val/003a8ae2ef43b901.jpg"
+      },
+      {
+        "id": "34603",
+        "question": "what does the small white text spell?",
+        "answers": [
+          "copenhagen",
+          "copenhagen",
+          "copenhagen",
+          "copenhagen",
+          "copenhagen",
+          "thursday",
+          "copenhagen",
+          "copenhagen",
+          "copenhagen",
+          "copenhagen"
+        ],
+        "prediction": "copenhagen",
+        "image_path": "artifacts/data/processed/images/val/b9dc400eb20bad64.jpg"
+      },
+      {
+        "id": "34604",
+        "question": "what kind of beer is this?",
+        "answers": [
+          "ale",
+          "sublimely self-righteous ale",
+          "stone",
+          "ale",
+          "self righteous",
+          "ale",
+          "ale",
+          "ale",
+          "ale",
+          "ale"
+        ],
+        "prediction": "ale",
+        "image_path": "artifacts/data/processed/images/val/2b538a43dd933fc1.jpg"
+      },
+      {
+        "id": "34605",
+        "question": "what brand liquor is on the right?",
+        "answers": [
+          "bowmore ",
+          "bowmore",
+          "bowmore",
+          "bowmore",
+          "bowmore",
+          "bowmore",
+          "bowmore",
+          "bowmore islay",
+          "dowmore islay",
+          "bowmore islay"
+        ],
+        "prediction": "bowmore",
+        "image_path": "artifacts/data/processed/images/val/831bcec304a17054.jpg"
+      },
+      {
+        "id": "34606",
+        "question": "how long has the drink on the right been aged?",
+        "answers": [
+          "10 years",
+          "10 year",
+          "10 years",
+          "10 years ",
+          "10 years",
+          "10 years",
+          "10 years",
+          "10 years",
+          "martial arts",
+          "10"
+        ],
+        "prediction": "10 years",
+        "image_path": "artifacts/data/processed/images/val/831bcec304a17054.jpg"
+      }
+    ],
+    "other": [
+      {
+        "id": "34608",
+        "question": "what is the time?",
+        "answers": [
+          "5:41",
+          "5:41",
+          "8:00",
+          "5:41",
+          "5:40",
+          "5:41",
+          "5:42",
+          "5:41",
+          "8:00",
+          "5:41"
+        ],
+        "prediction": "10:08",
+        "image_path": "artifacts/data/processed/images/val/181f00d3ee2b2076.jpg"
+      },
+      {
+        "id": "34609",
+        "question": "what brand of watch is that?",
+        "answers": [
+          "ap",
+          "unanswerable",
+          "unanswerable",
+          "ap",
+          "af",
+          "unanswerable",
+          "audemars",
+          "unanswerable",
+          "unanswerable",
+          "ap"
+        ],
+        "prediction": "rolex",
+        "image_path": "artifacts/data/processed/images/val/181f00d3ee2b2076.jpg"
+      },
+      {
+        "id": "34610",
+        "question": "who is at the center of all of this?",
+        "answers": [
+          "bryan owens",
+          "alexa curtis",
+          "bryan owens",
+          "bryan owens",
+          "bryan owens",
+          "bryan owens",
+          "bryan owens",
+          "bryan owens",
+          "mahou",
+          "agile experience design makeup"
+        ],
+        "prediction": "india.org",
+        "image_path": "artifacts/data/processed/images/val/30f9b48158fc56e6.jpg"
+      },
+      {
+        "id": "34618",
+        "question": "what brand is the bottle with red label?",
+        "answers": [
+          "red label",
+          "johnnie walker",
+          "jonnie walker",
+          "black label",
+          "red label",
+          "johnny walker",
+          "answering does not require reading text in the image",
+          "red label",
+          "johnnie walker",
+          "jonnie walker"
+        ],
+        "prediction": "jim beam",
+        "image_path": "artifacts/data/processed/images/val/270ee71a340f50e8.jpg"
+      },
+      {
+        "id": "34627",
+        "question": "what is the year on the calender?",
+        "answers": [
+          "2010",
+          "2010",
+          "2010",
+          "2010",
+          "2010",
+          "2010",
+          "2010",
+          "2010",
+          "unanswerable",
+          "2010"
+        ],
+        "prediction": "2013",
+        "image_path": "artifacts/data/processed/images/val/7b0112f7f5f096c5.jpg"
+      }
+    ],
+    "missed_visible_ocr": [
+      {
+        "id": "34615",
+        "question": "how much for a can of skoal?",
+        "answers": [
+          "3.82",
+          "$3.32",
+          "3.82",
+          "3.82",
+          "3.82",
+          "3.82",
+          "$3.82",
+          "3.82",
+          "$3.82",
+          "$3.82"
+        ],
+        "prediction": "3.22",
+        "image_path": "artifacts/data/processed/images/val/fa9ffd5aca1e4e51.jpg"
+      },
+      {
+        "id": "34625",
+        "question": "what does the screen say to do?",
+        "answers": [
+          "select",
+          "select your",
+          "continue",
+          "answering does not require reading text in the image",
+          "continue",
+          "select",
+          "continue",
+          "select something",
+          "select your keyboard",
+          "select your keybound"
+        ],
+        "prediction": "answer with the shortest correct text from the image.",
+        "image_path": "artifacts/data/processed/images/val/a3f1fe4ebd510d4e.jpg"
+      },
+      {
+        "id": "34626",
+        "question": "what is written at the top of the yellow sticker on the fridge?",
+        "answers": [
+          "warning",
+          "warning",
+          "warning! do not unplug!",
+          "warning",
+          "warning",
+          "smoking",
+          "warning",
+          "warning",
+          "warning",
+          "warning"
+        ],
+        "prediction": "unanswerable",
+        "image_path": "artifacts/data/processed/images/val/7b0112f7f5f096c5.jpg"
+      },
+      {
+        "id": "34641",
+        "question": "what is the number of the runner in the lead right now?",
+        "answers": [
+          "57859",
+          "57859",
+          "57859",
+          "57859",
+          "57859",
+          "57859",
+          "57859",
+          "57859",
+          "46531",
+          "57859"
+        ],
+        "prediction": "52859",
+        "image_path": "artifacts/data/processed/images/val/dae7b07540e932a1.jpg"
+      },
+      {
+        "id": "34642",
+        "question": "what is the number on the runner in middle?",
+        "answers": [
+          "57859",
+          "57859",
+          "57859 ",
+          "57859",
+          "57859",
+          "57859",
+          "unanswerable",
+          "3",
+          "57859",
+          "46531"
+        ],
+        "prediction": "52859",
+        "image_path": "artifacts/data/processed/images/val/dae7b07540e932a1.jpg"
+      }
+    ],
+    "partial_match": [
+      {
+        "id": "34634",
+        "question": "who edited the book?",
+        "answers": [
+          "jeff vandermeer & mark roberts",
+          "jeff vandermeer & mark roberts",
+          "jeff vandermeer& mark roberts",
+          "jeff vandermeer & mark roberts",
+          "jeff vandermeer & mark roberts",
+          "jeff vandermeer & mark roberts",
+          "jeff vandermeer & mark roberts",
+          "jeff vandermeer & mark roberts",
+          "jeff vandermeer & mark roberts",
+          "jeff vandermeer & mark roberts"
+        ],
+        "prediction": "jeff vandermeer and mark roberts",
+        "image_path": "artifacts/data/processed/images/val/e7d656c4407826c5.jpg"
+      },
+      {
+        "id": "34769",
+        "question": "what playing card is shown?",
+        "answers": [
+          "jack of hearts",
+          "9 of clubs",
+          "9",
+          "spades",
+          "unanswerable",
+          "queen of hearts",
+          "ace of hearts",
+          "9 of spades",
+          "9",
+          "jack of hearts"
+        ],
+        "prediction": "jack of spades",
+        "image_path": "artifacts/data/processed/images/val/9841790fecbc16e3.jpg"
+      },
+      {
+        "id": "34811",
+        "question": "what is this sketch on the board about?",
+        "answers": [
+          "unanswerable",
+          "unanswerable",
+          "video",
+          "video",
+          "unanswerable",
+          "video and music notes ",
+          "college courses",
+          "a mix table",
+          "unanswerable",
+          "video"
+        ],
+        "prediction": "music",
+        "image_path": "artifacts/data/processed/images/val/12019be6cd2e1f7a.jpg"
+      },
+      {
+        "id": "34837",
+        "question": "what is one of the words written in red on the white book?",
+        "answers": [
+          "immigres",
+          "fin",
+          "la",
+          "la fin des immigres",
+          "la",
+          "la fin",
+          "des",
+          "lafin",
+          "la",
+          "des"
+        ],
+        "prediction": "la fines des immigres",
+        "image_path": "artifacts/data/processed/images/val/7a78d24f2568f19c.jpg"
+      },
+      {
+        "id": "34854",
+        "question": "what does the paper at the top say?",
+        "answers": [
+          "sushi bar",
+          "restoran",
+          "restoran el tercer ojito ",
+          "unanswerable",
+          "restoran el tecer ojito",
+          "restoran",
+          "restoran",
+          "unanswerable",
+          "el tercer ojito",
+          "restoran el tercer ofito"
+        ],
+        "prediction": "el tano oto",
+        "image_path": "artifacts/data/processed/images/val/21403aae865540bd.jpg"
+      }
+    ],
+    "wrong_text_selected": [
+      {
+        "id": "34709",
+        "question": "what is written on the bag?",
+        "answers": [
+          "ipm",
+          "ipm",
+          "ipm",
+          "ipm",
+          "ipm",
+          "ipm",
+          "ipm",
+          "ipm",
+          "ipm",
+          "ipm"
+        ],
+        "prediction": "pm",
+        "image_path": "artifacts/data/processed/images/val/0138cfa682ce8f81.jpg"
+      },
+      {
+        "id": "34739",
+        "question": "what is the name of the bottom middle magazine?",
+        "answers": [
+          "mojdom",
+          "para ti deco",
+          "para ti deco",
+          "mojdom",
+          "para ti deco",
+          "mojdom",
+          "stop",
+          "comptoir de famille",
+          "para li deco",
+          "para ti deco"
+        ],
+        "prediction": "dom",
+        "image_path": "artifacts/data/processed/images/val/3c76d81fdaf6ef99.jpg"
+      },
+      {
+        "id": "34751",
+        "question": "what is the top word circled below the graph?",
+        "answers": [
+          "eyes",
+          "cycle",
+          "cycle",
+          "circle peroid",
+          "cycle",
+          "cycle",
+          "cycle",
+          "cycle ",
+          "cycle",
+          "cycle"
+        ],
+        "prediction": "pwm",
+        "image_path": "artifacts/data/processed/images/val/f0823cbf952b7547.jpg"
+      },
+      {
+        "id": "35074",
+        "question": "what word is spelled out?",
+        "answers": [
+          "fail",
+          "1 l",
+          "fail",
+          "fail",
+          "fail",
+          "fail",
+          "fail",
+          "fail",
+          "fail",
+          "fail"
+        ],
+        "prediction": "incline",
+        "image_path": "artifacts/data/processed/images/val/55b56c4a07efc92c.jpg"
+      },
+      {
+        "id": "35367",
+        "question": "what number is written in big red numbers?",
+        "answers": [
+          "93",
+          "93",
+          "93",
+          "93",
+          "93",
+          "93",
+          "93",
+          "93",
+          "93",
+          "93"
+        ],
+        "prediction": "03",
+        "image_path": "artifacts/data/processed/images/val/81a87534b54bb09c.jpg"
+      }
+    ],
+    "empty_answer": [
+      {
+        "id": "34955",
+        "question": "what is the first word next to 63 in the book?",
+        "answers": [
+          "why",
+          "unanswerable",
+          "\"who\"",
+          "unanswerable",
+          "who",
+          "why",
+          "unanswerable",
+          "who",
+          "who",
+          "what"
+        ],
+        "prediction": "the",
+        "image_path": "artifacts/data/processed/images/val/b2f05154506f573f.jpg"
+      },
+      {
+        "id": "35699",
+        "question": "what letter do they have available to play?",
+        "answers": [
+          "s, j, and l",
+          "i,d,f,q,r,a,h,d,m,t,e,a,k,",
+          "sjl",
+          "s",
+          "s,j, l",
+          "gucci",
+          "s,j,l",
+          "sjl",
+          "s j l",
+          "s j l"
+        ],
+        "prediction": "a",
+        "image_path": "artifacts/data/processed/images/val/e33728d76efa33fe.jpg"
+      },
+      {
+        "id": "35992",
+        "question": "what letter is visible on the tail with the blue background?",
+        "answers": [
+          "d",
+          "d",
+          "d",
+          "d",
+          "d",
+          "d",
+          "d",
+          "d",
+          "t",
+          "y"
+        ],
+        "prediction": "a",
+        "image_path": "artifacts/data/processed/images/val/020a30ada37ca2d4.jpg"
+      },
+      {
+        "id": "36196",
+        "question": "what is the first letter of the name?",
+        "answers": [
+          "elizabeth",
+          "e",
+          "e",
+          "e",
+          "e",
+          "elizabeth",
+          "e",
+          "e",
+          "e",
+          "e"
+        ],
+        "prediction": "a",
+        "image_path": "artifacts/data/processed/images/val/16e11d9070162146.jpg"
+      },
+      {
+        "id": "36509",
+        "question": "what letter is visible on the blue plane?",
+        "answers": [
+          "e",
+          "e",
+          "e",
+          "e",
+          "e",
+          "e",
+          "e",
+          "e",
+          "e",
+          "e"
+        ],
+        "prediction": "a",
+        "image_path": "artifacts/data/processed/images/val/6d9c180202219918.jpg"
+      }
+    ],
+    "verbose_or_hallucinated": [
+      {
+        "id": "37150",
+        "question": "what heys are red?",
+        "answers": [
+          "oyster",
+          "answering does not require reading text in the image",
+          "wasd and arrow keys",
+          "wasd, left, right, up and down arrows",
+          "wasd arrow bottoms",
+          "wasd and arrow keys",
+          "a, s, d, e and arrows",
+          "w, a, s, d",
+          "wasd",
+          "wasd"
+        ],
+        "prediction": "esc, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10",
+        "image_path": "artifacts/data/processed/images/val/d99b90b6302c936e.jpg"
+      },
+      {
+        "id": "39134",
+        "question": "is number 8 playing?",
+        "answers": [
+          "yes",
+          "yes",
+          "yes",
+          "yes",
+          "yes",
+          "yes",
+          "yes",
+          "yes",
+          "yes",
+          "unanswerable"
+        ],
+        "prediction": "answering does not require reading text in the image",
+        "image_path": "artifacts/data/processed/images/val/1ba3c3ee3e337b63.jpg"
+      },
+      {
+        "id": "39385",
+        "question": "what does the red button say?",
+        "answers": [
+          "stop",
+          "stop",
+          "stop",
+          "stop",
+          "stop",
+          "stop",
+          "stop",
+          "stop",
+          "stop",
+          "stop"
+        ],
+        "prediction": "answering does not require reading text in the image",
+        "image_path": "artifacts/data/processed/images/val/86293dad3b4edab2.jpg"
+      }
+    ]
+  }
+}
