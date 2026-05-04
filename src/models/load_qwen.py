@@ -78,21 +78,7 @@ def load_qwen_model_and_processor(config: dict[str, Any], for_training: bool = F
             bnb_4bit_compute_dtype=torch_dtype(config.get("dtype", "bfloat16")),
         )
 
-    try:
-        model = Qwen2_5_VLForConditionalGeneration.from_pretrained(model_id, **model_kwargs)
-    except Exception:
-        if model_kwargs.get("attn_implementation") == "flash_attention_2" and config.get("allow_attn_fallback", True):
-            model_kwargs["attn_implementation"] = "sdpa"
-            model = Qwen2_5_VLForConditionalGeneration.from_pretrained(model_id, **model_kwargs)
-        elif model_kwargs.get("attn_implementation") == "flash_attention_2":
-            raise SystemExit(
-                "FlashAttention 2 was requested but model loading failed, and `allow_attn_fallback` is false.\n"
-                "Install a compatible flash-attn build in this environment, for example:\n"
-                "  python -m pip install flash-attn --no-build-isolation\n"
-                "Then rerun the training/evaluation script."
-            )
-        else:
-            raise
+    model = Qwen2_5_VLForConditionalGeneration.from_pretrained(model_id, **model_kwargs)
 
     if for_training:
         model.config.use_cache = False

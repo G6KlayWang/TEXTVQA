@@ -2,7 +2,6 @@ accelerate>=0.34
 bitsandbytes>=0.43
 datasets>=3.0
 evaluate>=0.4
-flash-attn>=2.5
 matplotlib>=3.8
 nltk>=3.8
 openai>=1.40

@@ -24,12 +24,6 @@ NUM_GPUS=2 bash scripts/03_eval_zeroshot.sh --max_samples 100
 NUM_GPUS=4 bash scripts/04_train_lora.sh
 ```
 
-The default model config requires FlashAttention 2. Install it in the active CUDA environment before fine-tuning:
-
-```bash
-python -m pip install flash-attn --no-build-isolation
-```
-
 Preprocessing is CPU/I/O-bound and uses 8 CPU workers by default. Override this with:
 
 ```bash
