@@ -33,6 +33,7 @@ def main() -> None:
                 "*.json",
                 "*.jinja",
                 "*.safetensors",
+                "*.bin",
                 "*.txt",
                 "*.model",
                 "*.tiktoken",

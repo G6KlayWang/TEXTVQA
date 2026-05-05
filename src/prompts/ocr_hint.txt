@@ -1,0 +1,4 @@
+OCR tokens detected in the image: {ocr_tokens}
+Question: {question}
+Use the image and the OCR tokens as hints. Return only the short answer. Do not explain.
+

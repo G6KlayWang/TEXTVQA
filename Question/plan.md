@@ -48,7 +48,7 @@ To satisfy the experimental-design requirement, run focused ablations that isola
 | **Adaptation method** | zero-shot base model vs. LoRA fine-tuned model | Measures the overall gain from task-specific fine-tuning. |
 | **LoRA target modules** | attention-only LoRA (`q/k/v/o_proj`) vs. attention+MLP LoRA (`q/k/v/o/gate/up/down_proj`) | Tests whether adapting MLP layers improves answer generation beyond attention adaptation. |
 | **Image resolution** | 448px preprocessing vs. higher-resolution preprocessing, if VRAM allows | Tests whether better visual/OCR detail improves text reading accuracy. |
-| **Prompt format** | concise answer-only prompt vs. prompt with explicit OCR-reading instruction | Tests whether inference-time prompting changes answer accuracy without retraining. |
+| **Prompt format** | concise answer-only prompt vs. explicit OCR-reading instruction vs. OCR-hint prompt with detected OCR tokens | Tests whether inference-time prompting changes answer accuracy without retraining, and separates generic instruction effects from explicit OCR-token context. |
 
 Report each ablation with the same validation split, decoding settings, and TextVQA soft accuracy metric. Include a small table in the final report with accuracy, semantic metrics, runtime/VRAM notes, and 2-3 qualitative examples where the ablation changes the result.
 

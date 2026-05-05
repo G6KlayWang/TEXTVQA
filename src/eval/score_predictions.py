@@ -60,11 +60,10 @@ def main() -> None:
     summary = scalar_summary(metrics)
     summary["llm_judge"] = metrics.get("llm_judge")
     update_csv(out_dir / "summary.csv", summary)
-    if args.tag.startswith("ablation_"):
+    if "ablation" in args.tag:
         update_csv(out_dir / "ablation_summary.csv", summary)
     print(f"Scored {args.predictions}: accuracy={metrics['textvqa_accuracy']:.4f}")
 
 
 if __name__ == "__main__":
     main()
-

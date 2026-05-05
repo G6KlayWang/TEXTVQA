@@ -41,9 +41,12 @@ The implemented workflow is:
 6. Run ablations:
    - attention-only LoRA
    - OCR-instruction prompt
+   - OCR-hint prompt with detected OCR tokens
    - high-resolution image preprocessing/evaluation
 7. Score predictions with TextVQA soft accuracy and semantic metrics.
 8. Generate plots, qualitative examples, and error taxonomy.
+
+The optional BLIP-2 extension adds `Salesforce/blip2-opt-2.7b` as a second model and compares it against Qwen under the same TextVQA data split, answer normalization, metrics, and main LoRA hyperparameters. This follows the model-comparison logic in `report/Sample.pdf`: Qwen represents a newer native multimodal transformer, while BLIP-2 represents a frozen-vision/Q-Former/OPT bridge architecture.
 
 The official TextVQA test labels are typically unavailable, so final reported numbers use the validation split. During training, a small holdout from the training split is used for training-time evaluation to avoid tuning directly on the official validation split.
 
@@ -86,9 +89,13 @@ Run scripts from the repository root.
 | `scripts/01_download_data.sh` | Downloads/caches TextVQA train and validation splits from Hugging Face. Sets `HF_HUB_DISABLE_XET=1` to avoid Xet/CAS download issues. |
 | `scripts/02_preprocess.sh` | Converts TextVQA into local JSONL files and cached JPEG images under `artifacts/data/processed/`. Uses multi-core CPU preprocessing with progress bars. |
 | `scripts/03_eval_zeroshot.sh` | Runs zero-shot Qwen2.5-VL inference on validation data. Uses multi-GPU Accelerate and CPU DataLoader workers. |
+| `scripts/03_eval_zeroshot_blip2.sh` | Runs zero-shot BLIP-2 OPT-2.7B inference on validation data. |
 | `scripts/04_train_lora.sh` | Fine-tunes Qwen2.5-VL with LoRA. Uses multi-GPU Accelerate, bf16, gradient checkpointing, and local HF cache loading after pre-caching. |
+| `scripts/04_train_lora_blip2.sh` | Fine-tunes BLIP-2 with LoRA using the same main training hyperparameters as Qwen. |
 | `scripts/05_eval_finetuned.sh` | Runs validation inference with the LoRA adapter. Uses multi-GPU Accelerate and CPU DataLoader workers. |
-| `scripts/06_run_ablations.sh` | Runs ablation experiments: attention-only LoRA, OCR prompt, and high-resolution evaluation. Uses multi-GPU inference/training and CPU preprocessing workers. |
+| `scripts/05_eval_finetuned_blip2.sh` | Runs validation inference with the BLIP-2 LoRA adapter. |
+| `scripts/06_run_ablations.sh` | Runs Qwen ablations: attention-only LoRA, OCR instruction, OCR hint, and high-resolution evaluation. Skips completed checkpoints/predictions unless `FORCE=1` is set. |
+| `scripts/06_run_model_comparison_ablations.sh` | Runs Qwen ablations plus BLIP-2 zero-shot, BLIP-2 LoRA, BLIP-2 Q-Former-only LoRA, and BLIP-2 OCR-hint ablations. |
 | `scripts/07_generate_results.sh` | Scores prediction files, builds summary CSVs, error taxonomy, plots, and qualitative gallery. |
 | `scripts/run_all.sh` | Runs the full pipeline from environment setup through results generation. |
 
@@ -110,6 +117,28 @@ bash scripts/03_eval_zeroshot.sh
 bash scripts/04_train_lora.sh
 bash scripts/05_eval_finetuned.sh
 bash scripts/06_run_ablations.sh
+bash scripts/07_generate_results.sh
+```
+
+Qwen ablations are resume-friendly. If an expected checkpoint or prediction file already exists, `scripts/06_run_ablations.sh` skips that stage:
+
+```bash
+bash scripts/06_run_ablations.sh
+```
+
+Force rerunning all Qwen ablations:
+
+```bash
+FORCE=1 bash scripts/06_run_ablations.sh
+```
+
+For the BLIP-2 model-comparison extension:
+
+```bash
+bash scripts/03_eval_zeroshot_blip2.sh
+bash scripts/04_train_lora_blip2.sh
+bash scripts/05_eval_finetuned_blip2.sh
+bash scripts/06_run_model_comparison_ablations.sh
 bash scripts/07_generate_results.sh
 ```
 
@@ -138,7 +167,10 @@ Main generated artifacts:
 
 - `artifacts/predictions/zero_shot_val.jsonl`
 - `artifacts/predictions/finetuned_val.jsonl`
+- `artifacts/predictions/blip2_zero_shot_val.jsonl`
+- `artifacts/predictions/blip2_finetuned_val.jsonl`
 - `artifacts/predictions/ablation_*.jsonl`
+- `artifacts/predictions/blip2_ablation_*.jsonl`
 - `artifacts/metrics/summary.csv`
 - `artifacts/metrics/ablation_summary.csv`
 - `artifacts/metrics/error_taxonomy.json`

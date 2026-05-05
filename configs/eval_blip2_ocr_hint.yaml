@@ -1,0 +1,21 @@
+prompt_template: src/prompts/blip2_ocr_hint.txt
+decoding:
+  max_new_tokens: 32
+  do_sample: false
+  temperature: 0.0
+metrics:
+  - textvqa_accuracy
+  - exact_match
+  - bleu
+  - meteor
+  - rouge
+  - f1_token
+  - llm_judge
+llm_judge:
+  enabled: true
+  model: gpt-4o-mini
+  prompt_template: src/eval/templates/judge_v1.txt
+  max_samples: 200
+batch_size: 1
+dataloader_num_workers: 2
+

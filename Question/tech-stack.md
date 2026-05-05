@@ -202,12 +202,18 @@ python -m src.inference.run_finetuned \
   --split val \
   --output artifacts/predictions/ablation_lora_attn_only_val.jsonl
 
-# 2. Prompt-format ablation, no retraining
+# 2. Prompt-format ablations, no retraining
 python -m src.inference.run_zeroshot \
   --model_config configs/model_qwen25vl.yaml \
   --eval_config configs/eval_ocr_prompt.yaml \
   --split val \
   --output artifacts/predictions/ablation_ocr_prompt_val.jsonl
+
+python -m src.inference.run_zeroshot \
+  --model_config configs/model_qwen25vl.yaml \
+  --eval_config configs/eval_ocr_hint.yaml \
+  --split val \
+  --output artifacts/predictions/ablation_ocr_hint_val.jsonl
 
 # 3. Image-resolution ablation, if VRAM allows
 python -m src.inference.run_finetuned \
@@ -240,6 +246,11 @@ python -m src.eval.score_predictions \
 python -m src.eval.score_predictions \
   --predictions artifacts/predictions/ablation_ocr_prompt_val.jsonl \
   --tag ablation_ocr_prompt \
+  --out artifacts/metrics/
+
+python -m src.eval.score_predictions \
+  --predictions artifacts/predictions/ablation_ocr_hint_val.jsonl \
+  --tag ablation_ocr_hint \
   --out artifacts/metrics/
 
 python -m src.eval.score_predictions \

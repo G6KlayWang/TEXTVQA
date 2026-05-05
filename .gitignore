@@ -7,4 +7,5 @@ __pycache__/
 .ruff_cache/
 wandb/
 runs/
-
+report/Sample.pdf
+blip2_extension_tasks.md
