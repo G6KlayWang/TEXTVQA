@@ -38,9 +38,17 @@ def split_train_eval(dataset: ProcessedTextVQADataset, holdout: int):
 
 
 def disable_cache(model) -> None:
-    for target in (model, getattr(model, "base_model", None), getattr(model, "model", None)):
-        if target is not None and hasattr(target, "config"):
+    seen = set()
+    stack = [model, getattr(model, "base_model", None), getattr(model, "model", None)]
+    while stack:
+        target = stack.pop()
+        if target is None or id(target) in seen:
+            continue
+        seen.add(id(target))
+        if hasattr(target, "config"):
             target.config.use_cache = False
+        for child_name in ("base_model", "model", "language_model", "text_decoder"):
+            stack.append(getattr(target, child_name, None))
     if hasattr(model, "generation_config"):
         model.generation_config.use_cache = False
 

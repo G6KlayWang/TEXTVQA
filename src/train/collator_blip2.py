@@ -15,25 +15,31 @@ class Blip2Collator:
         images = [sample["image"] for sample in features]
         prompts = [render_prompt(self.prompt_template, sample) for sample in features]
         answers = [sample.get("target_answer", "") for sample in features]
+        texts = [f"{prompt} {answer}".strip() for prompt, answer in zip(prompts, answers)]
 
         inputs = self.processor(
             images=images,
-            text=prompts,
+            text=texts,
             padding=True,
             truncation=bool(self.max_length),
             max_length=self.max_length,
             return_tensors="pt",
         )
-        labels = self.processor.tokenizer(
-            answers,
-            padding=True,
-            truncation=bool(self.max_length),
-            max_length=self.max_length,
-            return_tensors="pt",
-        ).input_ids
+        labels = inputs["input_ids"].clone()
         pad_id = self.processor.tokenizer.pad_token_id
         if pad_id is not None:
             labels[labels == pad_id] = -100
+
+        prompt_tokenized = self.processor.tokenizer(
+            prompts,
+            padding=False,
+            truncation=bool(self.max_length),
+            max_length=self.max_length,
+            add_special_tokens=True,
+        )
+        for row_idx, prompt_ids in enumerate(prompt_tokenized.input_ids):
+            prompt_len = min(len(prompt_ids), labels.shape[1])
+            labels[row_idx, :prompt_len] = -100
+
         inputs["labels"] = labels
         return inputs
-
