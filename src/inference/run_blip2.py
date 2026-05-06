@@ -34,13 +34,40 @@ def model_device(model):
     return next(model.parameters()).device
 
 
-def generate_one(model, processor, sample: dict, prompt: str, decoding: dict) -> str:
+def clean_blip2_prediction(raw_prediction: str, prompt: str) -> str:
+    prediction = (raw_prediction or "").strip()
+    prompt = (prompt or "").strip()
+
+    if prompt and prediction.startswith(prompt):
+        prediction = prediction[len(prompt) :].strip()
+
+    # Some BLIP-2/OPT decoding paths return the full prompt. Keep only the
+    # generated answer span so exact TextVQA scoring is comparable to Qwen.
+    lower = prediction.lower()
+    marker = "answer:"
+    if marker in lower:
+        marker_index = lower.rfind(marker)
+        prediction = prediction[marker_index + len(marker) :].strip()
+
+    for prefix in ("Answer:", "answer:", "A:", "a:"):
+        if prediction.startswith(prefix):
+            prediction = prediction[len(prefix) :].strip()
+
+    lines = [line.strip() for line in prediction.splitlines() if line.strip()]
+    if lines:
+        prediction = lines[0]
+
+    return prediction.strip()
+
+
+def generate_one(model, processor, sample: dict, prompt: str, decoding: dict) -> tuple[str, str]:
     import torch
 
     inputs = processor(images=sample["image"], text=prompt, return_tensors="pt").to(model_device(model))
     with torch.no_grad():
         generated = model.generate(**inputs, **decoding)
-    return processor.batch_decode(generated, skip_special_tokens=True)[0].strip()
+    raw_prediction = processor.batch_decode(generated, skip_special_tokens=True)[0].strip()
+    return clean_blip2_prediction(raw_prediction, prompt), raw_prediction
 
 
 def main() -> None:
@@ -99,10 +126,10 @@ def main() -> None:
             for sample in batch:
                 idx = sample["_index"]
                 prompt = render_prompt(template, sample)
-                prediction = generate_one(model, processor, sample, prompt, decoding)
+                prediction, raw_prediction = generate_one(model, processor, sample, prompt, decoding)
                 rows.append(
                     {k: sample[k] for k in sample if k not in {"image", "_index"}}
-                    | {"prediction": prediction, "prompt": prompt, "_index": idx}
+                    | {"prediction": prediction, "raw_prediction": raw_prediction, "prompt": prompt, "_index": idx}
                 )
             pbar.update(len(batch) - 1)
             pbar.set_postfix(written=len(rows), refresh=False)
@@ -125,4 +152,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
