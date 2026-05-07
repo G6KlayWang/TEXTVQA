@@ -70,6 +70,41 @@ def prediction_payload(row: dict | None) -> dict:
     return payload
 
 
+def markdown_escape(value: object) -> str:
+    text = "" if value is None else str(value)
+    return text.replace("|", "\\|").replace("\n", "<br>")
+
+
+def write_markdown_summary(samples: list[dict], prediction_tags: list[str], path: Path) -> None:
+    lines = ["# TextVQA Sample Outputs", ""]
+    for index, sample in enumerate(samples, start=1):
+        image_path = markdown_escape(sample["image_path"])
+        question = markdown_escape(sample.get("question", ""))
+        answers = markdown_escape(", ".join(sample.get("answers") or []))
+
+        lines.extend(
+            [
+                f"## Image {index}",
+                "",
+                f"![Image {index}]({image_path})",
+                "",
+                f"**Question:** {question}",
+                "",
+                f"**Ground-truth answers:** {answers}",
+                "",
+                "| Model | Prediction |",
+                "| --- | --- |",
+            ]
+        )
+        for tag in prediction_tags:
+            payload = sample["predictions"].get(tag, {})
+            prediction = payload.get("prediction") if payload.get("available") else "MISSING"
+            lines.append(f"| {markdown_escape(tag)} | {markdown_escape(prediction)} |")
+        lines.append("")
+
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
 def main() -> None:
     args = parse_args()
     prediction_inputs: list[tuple[str, Path]] = args.prediction
@@ -103,6 +138,7 @@ def main() -> None:
     json_dir.mkdir(parents=True, exist_ok=True)
 
     samples = []
+    prediction_tags = [tag for tag, _ in prediction_inputs]
     for index, reference_row in enumerate(selected, start=1):
         key = row_key(reference_row)
         original_image_path = Path(reference_row.get("image_path", ""))
@@ -135,6 +171,8 @@ def main() -> None:
         write_json(sample, json_dir / sample_json_name)
         samples.append(sample | {"json_path": str(Path("json") / sample_json_name)})
 
+    markdown_path = output_dir / "samples.md"
+    write_markdown_summary(samples, prediction_tags, markdown_path)
     write_json(
         {
             "num_samples": len(samples),
@@ -146,6 +184,7 @@ def main() -> None:
     )
     print(f"Wrote {len(samples)} samples to {output_dir}")
     print(f"Manifest: {manifest_path}")
+    print(f"Markdown summary: {markdown_path}")
     print(f"Per-sample JSON: {json_dir}")
     print(f"Images: {image_dir}")
 
