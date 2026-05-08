@@ -4,6 +4,8 @@
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{array}
@@ -73,40 +75,17 @@ The improvement method is parameter-efficient LoRA fine-tuning. The vision side 
 
 For BLIP-2, the same training configuration is reused where possible. The full BLIP-2 LoRA configuration targets OPT attention and feed-forward modules together with Q-Former query/value projections, while the Q-Former-only ablation targets only the bridge projections. This isolates the comparison to architecture and adapter placement while holding the dataset, optimizer schedule, and validation protocol fixed.
 
-\begin{center}
-  \textbf{Table 1: Main LoRA training configuration.}\\[0.5em]
-  \begin{tabular}{ll}
-    \toprule
-    Setting & Value \\
-    \midrule
-    Base model & Qwen2.5-VL-3B-Instruct \\
-    Trainable method & LoRA adapters \\
-    LoRA rank / alpha / dropout & 16 / 32 / 0.05 \\
-    Frozen modules & Vision-side parameters \\
-    Epochs & 2 \\
-    Per-device batch size & 2 \\
-    Gradient accumulation & 4 steps \\
-    Effective batch size & 32 with 4 GPUs \\
-    Learning rate & $1\times10^{-4}$ \\
-    Scheduler / warmup & Cosine / 3\% warmup \\
-    Precision & bfloat16 \\
-    Max sequence length & 2048 tokens \\
-    Seed & 42 \\
-    \bottomrule
-  \end{tabular}
-\end{center}
-
-Training uses the Hugging Face \texttt{Trainer} with gradient checkpointing enabled, tensorboard logging every 25 steps, checkpointing every 500 steps, and at most three saved checkpoints. A 512-example holdout is taken from the end of the training split for training-time evaluation, so the official validation split remains reserved for final model comparison. After training, the final LoRA adapter and processor are saved under \texttt{artifacts/checkpoints/lora-qwen25vl/best}.
+The LoRA hyperparameters follow common practice for instruction-tuned VLMs. We use rank $r{=}16$, alpha $\alpha{=}32$, and dropout $0.05$ applied to the seven projection modules listed above. Rank $16$ gives enough capacity to adapt all seven modules without saturating memory at our effective batch size; the $\alpha/r{=}2$ ratio is the conventional scaling so that each adapter update contributes stably during training; and the $0.05$ dropout matches the value used in the original LoRA paper \cite{hu2022lora}. Optimization uses AdamW at learning rate $1\times10^{-4}$ with a cosine schedule and $3\%$ linear warmup, a typical starting point for LoRA on bf16 transformers that matches PEFT defaults. Training runs for two epochs in bfloat16 with a per-device batch size of $2$ and four gradient-accumulation steps, giving an effective batch size of $32$ across four GPUs. Sequences are capped at $2{,}048$ tokens, gradient checkpointing is enabled so the 3B-parameter base model fits in memory, and the random seed is $42$. A $512$-example holdout from the end of the training split is reserved for training-time evaluation, leaving the official $5{,}000$-example validation split for final reporting. The focus of this report is the model-comparison axis, so we hold these adapter hyperparameters fixed across runs and ablate target-module placement instead.
 
 \subsection{Evaluation Procedure}
 
-All reported validation runs use the same processed TextVQA validation split of 5,000 examples. Prediction files are written as JSONL under \texttt{artifacts/predictions/}; each row preserves the question, answer list, image path, and model prediction. The same scoring entrypoint then computes metrics for zero-shot, fine-tuned, and ablation runs.
+All reported validation runs use the same processed TextVQA validation split of 5,000 examples. Each prediction record preserves the question, the human answer list, the image reference, and the model output, and the same scoring code then computes metrics for the zero-shot, fine-tuned, and ablation runs.
 
 The primary metric is TextVQA soft accuracy. Before scoring, predictions and answers are lowercased, stripped of punctuation, and normalized by removing English articles. A prediction receives credit according to the number of matching human answers, capped at one: $\min(\mathrm{matches}/3, 1)$. Exact match and token-level F1 are included as additional answer-level metrics. BLEU, METEOR, ROUGE-1, ROUGE-2, and ROUGE-L provide secondary semantic-overlap measurements, and the evaluation code also supports an LLM-as-a-judge pass over a capped sample for qualitative similarity checking.
 
 \subsection{Reproducibility}
 
-The repository is organized around stage-specific scripts: download, preprocess, zero-shot inference, LoRA training, fine-tuned inference, ablations, and result generation. Each stage reads YAML configuration files from \texttt{configs/} and writes outputs under \texttt{artifacts/}. The main scripts are resume-friendly where possible, and generated metrics, plots, qualitative examples, and prediction files are kept separate from raw data and checkpoints. This structure makes the final numbers traceable to a specific model configuration, LoRA configuration, training configuration, and prediction file.
+The pipeline is organized into stage-specific entrypoints: dataset download and preprocessing, zero-shot inference, LoRA training, fine-tuned inference, ablations, and result generation. Each stage is driven by a versioned configuration file, and all generated artifacts (metrics, plots, predictions, qualitative examples) are kept separate from raw data and checkpoints. This separation makes every reported number traceable to a specific model configuration, LoRA configuration, training configuration, and prediction set.
 
 \section{Experimental Design}
 
@@ -121,74 +100,160 @@ The experiments are designed to isolate one change at a time where possible. Wit
 
 \begin{center}
 \small
-\textbf{Table 2: Validation runs used in the experimental comparison.}\\[0.5em]
+\textbf{Table 1: Baseline and main fine-tuned runs.}\\[0.5em]
 \begin{tabular}{>{\raggedright\arraybackslash}p{0.21\linewidth}>{\raggedright\arraybackslash}p{0.25\linewidth}>{\raggedright\arraybackslash}p{0.40\linewidth}}
 \toprule
 Run & Purpose & Controlled comparison \\
 \midrule
 Qwen zero-shot & Baseline for Qwen's pretrained behavior on TextVQA. & No training; answer-only prompt; 448-pixel preprocessing; greedy decoding. \\
 Qwen full LoRA & Main Qwen improvement method. & Same validation split and decoding as zero-shot; LoRA on attention and MLP projection modules. \\
+BLIP-2 zero-shot & Baseline for a Q-Former/OPT architecture. & No training; BLIP-2 prompt template; same validation split and metrics. \\
+BLIP-2 full LoRA & Main BLIP-2 improvement method. & Same training hyperparameters as Qwen; adapters target OPT and Q-Former modules. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{0.75em}
+
+\begin{center}
+\small
+\textbf{Table 2: Ablation runs.}\\[0.5em]
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.21\linewidth}>{\raggedright\arraybackslash}p{0.25\linewidth}>{\raggedright\arraybackslash}p{0.40\linewidth}}
+\toprule
+Run & Purpose & Controlled comparison \\
+\midrule
 Qwen attention-only LoRA & Tests whether MLP adapter targets matter. & Same training and evaluation setup as full LoRA, but adapters are limited to \texttt{q/k/v/o\_proj}. \\
-Qwen OCR prompt & Tests prompt-only improvement without parameter updates. & Same pretrained model and validation split as zero-shot, but prompt explicitly asks the model to read visible text first. \\
+Qwen OCR prompt & Tests prompt-only improvement without parameter updates. & Same pretrained model and validation split as zero-shot, but the prompt explicitly asks the model to read visible text first. \\
 Qwen OCR hint & Tests explicit OCR-token context. & Same pretrained model and validation split as zero-shot, but the prompt includes detected OCR tokens. \\
 Qwen high-resolution & Tests whether text legibility is a bottleneck. & Same full-LoRA adapter, but validation images are preprocessed at 896 pixels and Qwen's max pixel budget is increased. \\
-BLIP-2 zero-shot & Baseline for a Q-Former/OPT architecture. & No training; BLIP-2 prompt template; same validation split and metrics. \\
-BLIP-2 full LoRA & Tests the same LoRA recipe on BLIP-2. & Same training hyperparameters as Qwen; adapters target OPT and Q-Former modules. \\
 BLIP-2 Q-Former-only & Tests whether adapting only the bridge is sufficient. & Same BLIP-2 setup, but LoRA is limited to Q-Former query/value projections. \\
 BLIP-2 OCR hint & Tests OCR-token prompting for BLIP-2. & Same BLIP-2 zero-shot model, but the prompt includes detected OCR tokens. \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-These runs correspond to the prediction and metric files under \texttt{artifacts/predictions/} and \texttt{artifacts/metrics/}.
-
 \subsection{Evaluation Metrics}
 
-The primary metric is TextVQA soft accuracy on the validation split because it matches the multi-answer annotation protocol. Exact match and token F1 are reported to show answer-level agreement under the same normalization. BLEU, METEOR, ROUGE-1, ROUGE-2, and ROUGE-L are included as secondary semantic-overlap metrics, mainly to compare whether a method improves short answer quality beyond exact string agreement.
+All metrics are computed over the same normalized strings: $\tilde{x}$ denotes the prediction or reference after lowercasing, punctuation removal, and English-article removal (\texttt{a}, \texttt{an}, \texttt{the}). For one example, $p$ is the model prediction and $A=\{a_1,\ldots,a_K\}$ is the human answer list (typically $K=10$); aggregate scores are the mean over the 5{,}000 validation examples unless stated otherwise.
 
-The final analysis also includes qualitative examples and an error taxonomy generated from the fine-tuned model predictions. This is necessary because aggregate accuracy cannot distinguish OCR failures, wrong-region selection, partial answers, empty outputs, and verbose or hallucinated answers. Those categories are used in the Results and Analysis section to explain where the model still fails after adaptation.
+\subsubsection{TextVQA Soft Accuracy}
+
+The primary metric. It matches TextVQA's multi-answer protocol by giving partial credit based on annotator agreement, so a prediction that several humans also gave receives full credit while a less-frequent variant receives a fraction. This is more appropriate than a single exact-match label because valid TextVQA answers vary in spelling, casing, and short-form choice.
+\[
+\mathrm{SoftAcc}(p, A) \;=\; \min\!\left(\frac{|\{a \in A : \tilde{a} = \tilde{p}\}|}{3},\, 1\right)
+\]
+
+\subsubsection{Exact Match}
+
+A strict answer-level metric: 1 if the normalized prediction equals the normalized form of any reference, else 0. It is more conservative than soft accuracy and useful as a sanity check that the model is not relying on partial-credit boundaries.
+\[
+\mathrm{EM}(p, A) \;=\; \mathbf{1}\!\left[\exists\, a \in A : \tilde{a} = \tilde{p}\right]
+\]
+
+\subsubsection{Token F1}
+
+A bag-of-tokens overlap score that rewards partially correct answers, for example when the prediction contains the right brand but adds an extra word. We take the maximum F1 over the reference set, where overlap is the multiset intersection of token counts.
+\[
+P = \frac{|\tilde{p} \cap \tilde{a}|}{|\tilde{p}|},\quad R = \frac{|\tilde{p} \cap \tilde{a}|}{|\tilde{a}|},\quad
+\mathrm{F1}(p, A) \;=\; \max_{a \in A} \frac{2\,P\,R}{P + R}
+\]
+
+\subsubsection{BLEU}
+
+Corpus-level n-gram precision (\texttt{sacrebleu}) of all predictions against the first listed reference, with a brevity penalty for short outputs. It captures whether the predicted phrase matches the reference at the n-gram level across the whole validation set, complementing per-example metrics that would otherwise be dominated by single-token answers.
+\[
+\mathrm{BLEU} \;=\; \mathrm{BP} \cdot \exp\!\left(\sum_{n=1}^{4} w_n \log p_n\right),\quad w_n = \tfrac{1}{4}
+\]
+where $p_n$ is the corpus-level modified n-gram precision and $\mathrm{BP}$ is the brevity penalty.
+
+\subsubsection{METEOR}
+
+A unigram-alignment metric (NLTK with WordNet) that uses stem and synonym matching, then penalizes fragmented alignments. It is more lenient than BLEU when the prediction uses an equivalent surface form, which helps for short TextVQA answers where ``coke'' and ``coca-cola'' should be treated as close.
+\[
+F_\alpha = \frac{P\,R}{\alpha P + (1-\alpha) R},\quad
+\mathrm{METEOR} \;=\; F_\alpha \cdot \left(1 - \gamma\, \mathrm{frag}^{\beta}\right)
+\]
+with the standard $\alpha{=}0.9$, $\beta{=}3$, $\gamma{=}0.5$ and $\mathrm{frag}$ equal to the chunk-to-match ratio.
+
+\subsubsection{ROUGE-1, ROUGE-2, ROUGE-L}
+
+F-measures of unigram, bigram, and longest-common-subsequence (LCS) overlap between the prediction and the first reference (\texttt{rouge\_score}, with stemming). ROUGE-1 and ROUGE-2 mirror BLEU on the recall side, and ROUGE-L additionally rewards correct word order without requiring contiguous matches, which matters for multi-token answers like proper nouns.
+\[
+\mathrm{ROUGE\text{-}N} \;=\; \frac{2\, P_n R_n}{P_n + R_n},\qquad
+\mathrm{ROUGE\text{-}L} \;=\; \frac{2\, P_{\mathrm{lcs}} R_{\mathrm{lcs}}}{P_{\mathrm{lcs}} + R_{\mathrm{lcs}}}
+\]
+where $P_n, R_n$ are n-gram precision and recall and $P_{\mathrm{lcs}}, R_{\mathrm{lcs}}$ use the LCS length over $|\tilde{p}|$ and $|\tilde{a}|$.
+
+\subsubsection{LLM-as-a-Judge}
+
+A semantic-equivalence score from \texttt{gpt-4.1-mini} computed on all 5{,}000 validation predictions per run. The judge sees the question, the human answer list, and the prediction, and returns a score in $[0, 1]$ for each item. It is included as a sanity check on cases where string-overlap metrics underrate paraphrases or near-synonyms (for example ``cola'' versus ``coca-cola''). The reported number is the mean of the per-item scores returned by the judge:
+\[
+\mathrm{Judge} \;=\; \frac{1}{N} \sum_{i=1}^{N} s_i,\qquad s_i \in [0, 1]
+\]
+
+\subsubsection{Error Taxonomy and Qualitative Examples}
+
+In addition to the scalar metrics above, the analysis uses an error taxonomy generated from the fine-tuned predictions, with categories for missed visible OCR, wrong text selected, partial match, empty answer, verbose or hallucinated, and other. This is necessary because aggregate accuracy cannot distinguish those failure modes, and the categories are referenced in the Results and Analysis section to explain where the model still fails after adaptation.
 
 \section{Results and Analysis}
 
 \subsection{Main Quantitative Results}
 
-Table 3 reports validation metrics for all completed runs. Qwen2.5-VL is much stronger than BLIP-2 on this TextVQA setup: Qwen zero-shot reaches 0.6858 soft accuracy, while BLIP-2 zero-shot reaches 0.0603. Qwen LoRA fine-tuning improves soft accuracy to 0.7453, an absolute gain of 5.95 percentage points over the Qwen zero-shot baseline. The high-resolution Qwen evaluation gives the strongest result, reaching 0.8277 soft accuracy and 0.8881 token F1.
+Table 3 reports validation metrics for the baseline and main fine-tuned runs. Qwen2.5-VL is much stronger than BLIP-2 on this TextVQA setup: Qwen zero-shot reaches 0.6858 soft accuracy, while BLIP-2 zero-shot reaches 0.0603. Qwen LoRA fine-tuning improves soft accuracy to 0.7453, an absolute gain of 5.95 percentage points over the Qwen zero-shot baseline, and is the best run across every metric in this subset.
 
 \begin{center}
 \small
-\textbf{Table 3: Validation performance on 5,000 TextVQA examples.}\\[0.5em]
-\begin{tabular}{lrrrrr}
+\textbf{Table 3: Validation performance for baseline and main fine-tuned runs (5,000 TextVQA examples).}\\[0.5em]
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lrrrrrrrrr}
 \toprule
-Run & Soft acc. & Exact & Token F1 & BLEU & ROUGE-L \\
+Run & Soft acc. & Exact & Token F1 & BLEU & METEOR & ROUGE-1 & ROUGE-2 & ROUGE-L & Judge \\
 \midrule
-Zero-shot Qwen & 0.6858 & 0.7262 & 0.7718 & 14.22 & 0.6155 \\
-Full LoRA & 0.7453 & 0.7826 & 0.8104 & 46.64 & 0.6451 \\
-Attention-only LoRA & 0.7192 & 0.7556 & 0.7879 & 44.07 & 0.6271 \\
-OCR prompt & 0.6890 & 0.7280 & 0.7716 & 13.42 & 0.6175 \\
-OCR hint & 0.7011 & 0.7378 & 0.7788 & 14.87 & 0.6210 \\
-High-resolution & \textbf{0.8277} & \textbf{0.8668} & \textbf{0.8881} & \textbf{49.62} & \textbf{0.7021} \\
+Qwen zero-shot & 0.6858 & 0.7262 & 0.7718 & 14.22 & 0.4955 & 0.6159 & 0.1850 & 0.6155 & 0.7474 \\
+Qwen full LoRA & \textbf{0.7453} & \textbf{0.7826} & \textbf{0.8104} & \textbf{46.64} & \textbf{0.5076} & \textbf{0.6456} & \textbf{0.1891} & \textbf{0.6451} & \textbf{0.7784} \\
 \midrule
-BLIP-2 zero-shot & 0.0603 & 0.0680 & 0.1237 & 2.64 & 0.0942 \\
-BLIP-2 LoRA & 0.0537 & 0.0578 & 0.1718 & 1.05 & 0.1219 \\
-BLIP-2 Q-Former-only & 0.0582 & 0.0654 & 0.1187 & 0.12 & 0.0833 \\
-BLIP-2 OCR hint & 0.0547 & 0.0606 & 0.1116 & 1.74 & 0.0882 \\
+BLIP-2 zero-shot & 0.0603 & 0.0680 & 0.1237 & 2.64 & 0.1057 & 0.0945 & 0.0370 & 0.0942 & 0.1417 \\
+BLIP-2 full LoRA & 0.0537 & 0.0578 & 0.1718 & 1.05 & 0.1770 & 0.1224 & 0.0278 & 0.1219 & 0.3958 \\
 \bottomrule
 \end{tabular}
+}
 \end{center}
 
 \begin{center}
 \includegraphics[width=\linewidth]{../artifacts/figures/accuracy_comparison.pdf}
 
-\textbf{Figure 1:} TextVQA soft accuracy across the completed validation runs.
+\textbf{Figure 1:} TextVQA soft accuracy across all 10 validation runs (baseline, main fine-tuned, and ablation), sorted by accuracy and color-coded by model family. Qwen2.5-VL runs are shown in teal, BLIP-2 runs in orange.
 \end{center}
 
-The main comparison shows that adaptation is useful for Qwen, but also that image legibility is a major limiting factor. Full LoRA improves over Qwen zero-shot while keeping the same 448-pixel preprocessing, which indicates that task-specific answer formatting and text-conditioned reasoning can be learned through lightweight adapters. The high-resolution run adds another 8.25 percentage points over the full-LoRA run, suggesting that many remaining Qwen errors are driven by insufficient visual detail, with language-side reasoning playing a smaller role. BLIP-2 performs far below Qwen in both zero-shot and LoRA settings, which suggests that this BLIP-2/OPT prompt-and-decoding setup is poorly matched to TextVQA's short OCR-heavy answers.
+The main comparison shows that LoRA adaptation is useful for Qwen: full LoRA improves over Qwen zero-shot while keeping the same 448-pixel preprocessing, which indicates that task-specific answer formatting and text-conditioned reasoning can be learned through lightweight adapters without changing the visual front end. BLIP-2 performs far below Qwen in both zero-shot and LoRA settings, which suggests that this BLIP-2/OPT prompt-and-decoding setup is poorly matched to TextVQA's short OCR-heavy answers.
+
+The judge column makes the BLIP-2 failure mode visible. BLIP-2 LoRA reaches 0.3958 LLM-judge while only scoring 0.0537 soft accuracy, a gap roughly seven times larger than on any Qwen run. A direct look at the predictions confirms that most of this gap is decoding format rather than missing semantics: BLIP-2 LoRA outputs include echoed prompt fragments, repeated phrases (\textit{``vermouth di marbella vermouth di marbella vermouth di marbella\ldots''}), inserted unit strings (\textit{``\$1.00 usd.00 usd.00 usd.00\ldots''}), and over-specified product descriptions (\textit{``mccall's mark 70\% abv bourbon whiskey''} for an image whose answer is ``southern comfort''). The TextVQA normalizer expects a short answer string and is not robust to these patterns, so a prediction that contains the right token but is buried in surrounding text fails exact match, soft accuracy, and BLEU even when the underlying content is partially correct. OPT's tendency to continue past the answer, combined with BLIP-2's lack of an instruction-tuned chat template and our 32-token cap, means the LoRA adapter learns to produce on-topic but verbose continuations rather than short normalized answers. A judge that scores semantic equivalence ignores the formatting and recovers a much higher score, which is why we report it alongside string-overlap metrics. The implication is that closing the BLIP-2 gap on TextVQA likely needs answer-formatting supervision and stronger decoding constraints, not just more LoRA capacity.
 
 \subsection{Ablation Findings}
 
-The Qwen ablations separate four design choices: adapter target modules, prompt-only OCR instruction, OCR-token context, and image resolution. Attention-only LoRA improves over zero-shot by 3.34 percentage points, but it remains 2.61 points below full LoRA. This supports the choice to adapt both attention and MLP projection layers. The OCR prompt changes the model instruction without changing weights and gives only a small gain over zero-shot, from 0.6858 to 0.6890. Adding OCR-token hints improves more, to 0.7011, but still remains far below LoRA fine-tuning and high-resolution evaluation.
+Table 4 reports validation metrics for the ablation runs. The Qwen ablations separate four design choices: adapter target modules, prompt-only OCR instruction, OCR-token context, and image resolution. Attention-only LoRA improves over zero-shot by 3.34 percentage points but remains 2.61 points below full LoRA, which supports the choice to adapt both attention and MLP projection layers. The OCR prompt changes the model instruction without changing weights and gives only a small gain over zero-shot, from 0.6858 to 0.6890. Adding OCR-token hints improves more, to 0.7011, but still remains far below LoRA fine-tuning and high-resolution evaluation. The high-resolution run is the strongest validation setting overall, reaching 0.8277 soft accuracy, 0.8881 token F1, 49.62 BLEU, 0.5615 METEOR, 0.7028 ROUGE-1, 0.2096 ROUGE-2, 0.7021 ROUGE-L, and 0.8643 LLM-judge, an additional 8.25 points of soft accuracy over Qwen full LoRA.
 
-The high-resolution ablation has the largest effect. It uses the trained full-LoRA adapter but preprocesses validation images at 896 pixels and raises Qwen's maximum pixel budget. Its accuracy gain is consistent with the task definition: many TextVQA answers are small numbers, brand names, or short printed phrases, so preserving more image detail directly improves the model's chance of reading the relevant text. The BLIP-2 ablations do not show the same pattern: full LoRA, Q-Former-only LoRA, and OCR-hint prompting all remain near 5-6\% soft accuracy. This points to a model-architecture or formatting mismatch at a level that hyperparameter tuning is unlikely to close.
+\begin{center}
+\small
+\textbf{Table 4: Validation performance for ablation runs (5,000 TextVQA examples).}\\[0.5em]
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lrrrrrrrrr}
+\toprule
+Run & Soft acc. & Exact & Token F1 & BLEU & METEOR & ROUGE-1 & ROUGE-2 & ROUGE-L & Judge \\
+\midrule
+Qwen attention-only LoRA & 0.7192 & 0.7556 & 0.7879 & 44.07 & 0.4966 & 0.6276 & 0.1871 & 0.6271 & 0.7541 \\
+Qwen OCR prompt & 0.6890 & 0.7280 & 0.7716 & 13.42 & 0.4949 & 0.6179 & 0.1850 & 0.6175 & 0.7472 \\
+Qwen OCR hint & 0.7011 & 0.7378 & 0.7788 & 14.87 & 0.4941 & 0.6213 & 0.1834 & 0.6210 & 0.7569 \\
+Qwen high-resolution & \textbf{0.8277} & \textbf{0.8668} & \textbf{0.8881} & \textbf{49.62} & \textbf{0.5615} & \textbf{0.7028} & \textbf{0.2096} & \textbf{0.7021} & \textbf{0.8643} \\
+\midrule
+BLIP-2 Q-Former-only & 0.0582 & 0.0654 & 0.1187 & 0.12 & 0.0789 & 0.0837 & 0.0056 & 0.0833 & 0.1087 \\
+BLIP-2 OCR hint & 0.0547 & 0.0606 & 0.1116 & 1.74 & 0.1007 & 0.0885 & 0.0316 & 0.0882 & 0.1516 \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+The high-resolution ablation has the largest effect. It uses the trained full-LoRA adapter but preprocesses validation images at 896 pixels and raises Qwen's maximum pixel budget. Its accuracy gain is consistent with the task definition: many TextVQA answers are small numbers, brand names, or short printed phrases, so preserving more image detail directly improves the model's chance of reading the relevant text. We note that this run conflates two changes, the longest-side preprocessing resolution (448$\to$896) and Qwen's per-image max-pixel cap, so the reported gain is the joint effect of more legible inputs and a larger visual token budget rather than either factor in isolation. The BLIP-2 ablations do not show the same pattern: full LoRA, Q-Former-only LoRA, and OCR-hint prompting all remain near 5-6\% soft accuracy. This points to a model-architecture or formatting mismatch at a level that hyperparameter tuning is unlikely to close.
 
 \subsection{Question-Type Performance}
 
@@ -203,11 +268,11 @@ Figure 2 breaks down fine-tuned performance by the first word of the question. T
 \newpage
 \subsection{Error Analysis}
 
-The error taxonomy in Table 4 was generated from the full-LoRA validation predictions. The largest non-correct group is ``other,'' which contains heterogeneous failures that are not captured by the narrower rules. Among named failure modes, missed visible OCR is the dominant issue, accounting for 377 examples. Wrong text selection and partial matches are smaller but important because they show that the model often sees some relevant text but either chooses the wrong region or returns an incomplete answer.
+The error taxonomy in Table 5 was generated from the full-LoRA validation predictions. The largest non-correct group is ``other,'' which contains heterogeneous failures that are not captured by the narrower rules. Among named failure modes, missed visible OCR is the dominant issue, accounting for 377 examples. Wrong text selection and partial matches are smaller but important because they show that the model often sees some relevant text but either chooses the wrong region or returns an incomplete answer.
 
 \begin{center}
 \small
-\textbf{Table 4: Error taxonomy for the full-LoRA validation predictions.}\\[0.5em]
+\textbf{Table 5: Error taxonomy for the full-LoRA validation predictions.}\\[0.5em]
 \begin{tabular}{lrr}
 \toprule
 Category & Count & Share \\
@@ -225,31 +290,59 @@ Verbose or hallucinated & 3 & 0.06\% \\
 
 Qualitative examples support the same interpretation. The model correctly answers short text queries such as camera brands, city names, beer types, and ages when the relevant text is legible and well localized. Failures include reading a displayed time as ``10:08'' when the annotated answer is ``5:41,'' predicting a plausible watch brand when the answer set includes ``AP'' or ``unanswerable,'' and selecting the wrong name or product label in cluttered scenes. These examples show that the remaining errors go beyond answer formatting. They often require better OCR resolution, stronger grounding to the queried region, or explicit uncertainty when the text cannot be read.
 
-\subsection{Sample Outputs}
+Regrouping the taxonomy along an OCR-versus-reasoning axis sharpens this picture. Missed visible OCR (377), wrong text selected (51), and partial match (113) sum to 541 of the 1{,}087 errors (49.8\%); these are perception-side failures where the relevant text exists but is misread, mis-localized, or truncated. Empty (6) and verbose-or-hallucinated (3) outputs are decoding-side issues. The remaining 537 ``other'' cases are heterogeneous, but spot checking shows they often involve correct OCR followed by question-conditioned reasoning that misfires, such as choosing among multiple visible items, comparing numbers on a label, or resolving spatial references like ``second from the left.'' The 8.25-point lift from high-resolution evaluation, which only changes perception, is consistent with this split: roughly half of the LoRA model's errors are OCR-bound and respond directly to more legible inputs, while a meaningful tail still needs stronger question-grounded reasoning that resolution alone cannot fix.
 
-Figure 3 shows the first two curated examples from \texttt{artifacts/sample\_outputs/}. The bottle example is a case where Qwen reads the relevant brand correctly across most variants, while BLIP-2 gives generic or wrong bottle names. The clock example shows a harder visual-detail failure: the annotated answer is 10:07, but every Qwen variant predicts a nearby wrong time, and BLIP-2 either returns no answer or a generic time.
+\subsection{Summary}
 
-\newpage
+The strongest evidence from the experiments is that Qwen TextVQA performance improves through both adaptation and better visual resolution. LoRA fine-tuning provides a clear gain over zero-shot inference, full attention+MLP LoRA outperforms attention-only LoRA, and the high-resolution run produces the best overall validation accuracy. BLIP-2 performs much worse in this setup, which reinforces the model-selection decision to use Qwen as the primary system. The limited effect of OCR-only prompting suggests that the strongest model already understands the instruction to read text, but it still needs either task-specific adaptation or more legible visual inputs to answer reliably.
+
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\appendix
+
 \begin{center}
-\textbf{Figure 3: Representative sample outputs with source images and model predictions.}\\[0.75em]
+{\Large\bfseries Appendix}
+\end{center}
+\vspace{0.5em}
+
+\section{Training Curve}
+
+Figure~\ref{fig:training-curve} shows the LoRA training loss and training-time evaluation loss for the main Qwen2.5-VL run, computed against the 512-example holdout from the end of the training split. The curve confirms a stable cosine-scheduled decrease without divergence, and the eval loss tracks the training loss over both epochs, which is consistent with the small generalization gap observed between training-time evaluation and the official 5{,}000-example validation split.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\linewidth]{../artifacts/figures/training_curve.pdf}
+\caption{Qwen2.5-VL LoRA training loss and training-time evaluation loss across the two-epoch run. Eval loss is computed on the 512-example holdout taken from the end of the training split.}
+\label{fig:training-curve}
+\end{figure}
+
+\section{Qualitative Examples}
+
+This appendix shows the six curated validation examples used in the qualitative comparison, each with the source image, question, majority human answer, and predictions from all completed Qwen and BLIP-2 runs. Long BLIP-2 outputs that contain repeated phrases are truncated with ``\ldots'' for readability; the underlying repetition pattern is the failure mode discussed in \S5.1.
+
+\begin{center}
 \begin{minipage}[t]{0.47\linewidth}
 \centering
 \includegraphics[width=\linewidth]{../artifacts/sample_outputs/images/01_35514.jpg}\\[0.4em]
 \scriptsize
-\textbf{Question:} What is the brand of the second bottle from the left?\\
+\textbf{Q1:} What is the brand of the second bottle from the left?\\
 \textbf{Ground truth:} southern comfort\\[0.4em]
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{>{\raggedright\arraybackslash}p{0.34\linewidth}>{\raggedright\arraybackslash}p{0.54\linewidth}}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.36\linewidth}>{\raggedright\arraybackslash}p{0.55\linewidth}}
 \toprule
 Model & Prediction \\
 \midrule
 Qwen zero-shot & Southern Comfort \\
 Qwen LoRA & southern comfort \\
+Qwen attn-only LoRA & southern comfort \\
+Qwen OCR prompt & Southern Comfort \\
 Qwen OCR hint & Dewar's \\
 Qwen high-res & southern comfort \\
 BLIP-2 zero-shot & whiskey bottle \\
 BLIP-2 LoRA & mccall's mark 70\% abv bourbon whiskey \\
 BLIP-2 Q-Former & jack daniels whiskey \\
+BLIP-2 OCR hint & (empty) \\
 \bottomrule
 \end{tabular}
 \end{minipage}
@@ -258,32 +351,136 @@ BLIP-2 Q-Former & jack daniels whiskey \\
 \centering
 \includegraphics[width=\linewidth]{../artifacts/sample_outputs/images/02_34806.jpg}\\[0.4em]
 \scriptsize
-\textbf{Question:} What time does the top clock show?\\
+\textbf{Q2:} What time does the top clock show?\\
 \textbf{Ground truth:} 10:07\\[0.4em]
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{>{\raggedright\arraybackslash}p{0.34\linewidth}>{\raggedright\arraybackslash}p{0.54\linewidth}}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.36\linewidth}>{\raggedright\arraybackslash}p{0.55\linewidth}}
 \toprule
 Model & Prediction \\
 \midrule
 Qwen zero-shot & 10:25 \\
 Qwen LoRA & 10:25 \\
-Qwen attention-only & 10:35 \\
+Qwen attn-only LoRA & 10:35 \\
+Qwen OCR prompt & 10:25 \\
 Qwen OCR hint & 10:10 \\
 Qwen high-res & 10:25 \\
-BLIP-2 zero-shot & empty \\
+BLIP-2 zero-shot & (empty) \\
+BLIP-2 LoRA & (empty) \\
 BLIP-2 Q-Former & 1:00 pm \\
+BLIP-2 OCR hint & (empty) \\
 \bottomrule
 \end{tabular}
 \end{minipage}
 \end{center}
 
-These examples clarify why high-resolution evaluation improves the aggregate metric without fixing every case. It preserves enough detail to help some text-label examples, but it does not solve fine-grained clock reading here. They also show that OCR-token hints can pull the model toward the wrong nearby text, such as predicting ``Dewar's'' for the second bottle from the left. The qualitative pattern supports the quantitative conclusion that TextVQA requires both text legibility and question-conditioned grounding.
+\vspace{1em}
 
-\subsection{Summary}
+\begin{center}
+\begin{minipage}[t]{0.47\linewidth}
+\centering
+\includegraphics[width=\linewidth]{../artifacts/sample_outputs/images/03_36855.jpg}\\[0.4em]
+\scriptsize
+\textbf{Q3:} What word is written in white at the bottom of the label?\\
+\textbf{Ground truth:} barbieri\\[0.4em]
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.36\linewidth}>{\raggedright\arraybackslash}p{0.55\linewidth}}
+\toprule
+Model & Prediction \\
+\midrule
+Qwen zero-shot & Barberi \\
+Qwen LoRA & barberi \\
+Qwen attn-only LoRA & barberi \\
+Qwen OCR prompt & Barberi \\
+Qwen OCR hint & Aperitivo \\
+Qwen high-res & barbieri \\
+BLIP-2 zero-shot & ap\'erool \\
+BLIP-2 LoRA & aperol spumante vermouth di marbella vermouth di marbella\ldots \\
+BLIP-2 Q-Former & raspberries \\
+BLIP-2 OCR hint & (empty) \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.47\linewidth}
+\centering
+\includegraphics[width=\linewidth]{../artifacts/sample_outputs/images/04_36608.jpg}\\[0.4em]
+\scriptsize
+\textbf{Q4:} How much is the pink headband?\\
+\textbf{Ground truth:} \$2.00\\[0.4em]
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.36\linewidth}>{\raggedright\arraybackslash}p{0.55\linewidth}}
+\toprule
+Model & Prediction \\
+\midrule
+Qwen zero-shot & 100 \\
+Qwen LoRA & \$1.99 \\
+Qwen attn-only LoRA & unanswerable \\
+Qwen OCR prompt & 10 \\
+Qwen OCR hint & 00228 \\
+Qwen high-res & unanswerable \\
+BLIP-2 zero-shot & (empty) \\
+BLIP-2 LoRA & \$1.00 usd.00 usd.00 usd.00\ldots \\
+BLIP-2 Q-Former & \$1.00 \\
+BLIP-2 OCR hint & (empty) \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\end{center}
 
-The strongest evidence from the experiments is that Qwen TextVQA performance improves through both adaptation and better visual resolution. LoRA fine-tuning provides a clear gain over zero-shot inference, full attention+MLP LoRA outperforms attention-only LoRA, and the high-resolution run produces the best overall validation accuracy. BLIP-2 performs much worse in this setup, which reinforces the model-selection decision to use Qwen as the primary system. The limited effect of OCR-only prompting suggests that the strongest model already understands the instruction to read text, but it still needs either task-specific adaptation or more legible visual inputs to answer reliably.
+\vspace{1em}
 
-\bibliographystyle{plain}
-\bibliography{refs}
+\begin{center}
+\begin{minipage}[t]{0.47\linewidth}
+\centering
+\includegraphics[width=\linewidth]{../artifacts/sample_outputs/images/05_36430.jpg}\\[0.4em]
+\scriptsize
+\textbf{Q5:} What can you not do at anytime?\\
+\textbf{Ground truth:} no standing\\[0.4em]
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.36\linewidth}>{\raggedright\arraybackslash}p{0.55\linewidth}}
+\toprule
+Model & Prediction \\
+\midrule
+Qwen zero-shot & STAND \\
+Qwen LoRA & stand \\
+Qwen attn-only LoRA & stand \\
+Qwen OCR prompt & STAND \\
+Qwen OCR hint & Stand \\
+Qwen high-res & stand \\
+BLIP-2 zero-shot & (empty) \\
+BLIP-2 LoRA & (empty) \\
+BLIP-2 Q-Former & you can't take a picture of the building \\
+BLIP-2 OCR hint & (empty) \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.47\linewidth}
+\centering
+\includegraphics[width=\linewidth]{../artifacts/sample_outputs/images/06_35745.jpg}\\[0.4em]
+\scriptsize
+\textbf{Q6:} Which bank is hosting the cup?\\
+\textbf{Ground truth:} charles schwab\\[0.4em]
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.36\linewidth}>{\raggedright\arraybackslash}p{0.55\linewidth}}
+\toprule
+Model & Prediction \\
+\midrule
+Qwen zero-shot & Charles Schwab \\
+Qwen LoRA & charles schwab \\
+Qwen attn-only LoRA & charles schwab \\
+Qwen OCR prompt & Charles Schwab \\
+Qwen OCR hint & Charles Schwab \\
+Qwen high-res & wells fargo \\
+BLIP-2 zero-shot & (empty) \\
+BLIP-2 LoRA & chase bank of america williams leggings adidas adidas\ldots \\
+BLIP-2 Q-Former & bank of america \\
+BLIP-2 OCR hint & (empty) \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\end{center}
+
+These six panels span the main qualitative patterns: Qwen reads short brand strings reliably (Q1, Q6), Qwen still misreads cluttered or fine-grained text (Q2, Q3, Q4), the OCR-hint prompt can pull Qwen toward a nearby but wrong token (Q1 ``Dewar's,'' Q3 ``Aperitivo''), the high-resolution run does not always help on fine-grained perception (Q2, Q6), and BLIP-2 LoRA produces verbose or repeated continuations that fail string normalization despite being on-topic (Q1, Q3, Q4, Q6), which is consistent with the soft-accuracy versus LLM-judge gap reported in Table~3.
 
 \end{document}

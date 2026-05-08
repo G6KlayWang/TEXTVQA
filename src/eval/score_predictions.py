@@ -48,6 +48,10 @@ def main() -> None:
     judge = judge_rows(rows, eval_config)
     if judge.get("enabled"):
         metrics["llm_judge"] = judge["mean_score"]
+        metrics["llm_judge_n"] = judge.get("n")
+        metrics["llm_judge_batch_size"] = judge.get("batch_size")
+        metrics["llm_judge_api_calls"] = judge.get("api_calls")
+        metrics["llm_judge_samples"] = judge.get("samples", [])
     else:
         metrics["llm_judge"] = None
         metrics["llm_judge_status"] = judge
