@@ -265,7 +265,6 @@ Figure 2 breaks down fine-tuned performance by the first word of the question. T
 \textbf{Figure 2:} Fine-tuned TextVQA soft accuracy by question type.
 \end{center}
 
-\newpage
 \subsection{Error Analysis}
 
 The error taxonomy in Table 5 was generated from the full-LoRA validation predictions. The largest non-correct group is ``other,'' which contains heterogeneous failures that are not captured by the narrower rules. Among named failure modes, missed visible OCR is the dominant issue, accounting for 377 examples. Wrong text selection and partial matches are smaller but important because they show that the model often sees some relevant text but either chooses the wrong region or returns an incomplete answer.
@@ -292,9 +291,27 @@ Qualitative examples support the same interpretation. The model correctly answer
 
 Regrouping the taxonomy along an OCR-versus-reasoning axis sharpens this picture. Missed visible OCR (377), wrong text selected (51), and partial match (113) sum to 541 of the 1{,}087 errors (49.8\%); these are perception-side failures where the relevant text exists but is misread, mis-localized, or truncated. Empty (6) and verbose-or-hallucinated (3) outputs are decoding-side issues. The remaining 537 ``other'' cases are heterogeneous, but spot checking shows they often involve correct OCR followed by question-conditioned reasoning that misfires, such as choosing among multiple visible items, comparing numbers on a label, or resolving spatial references like ``second from the left.'' The 8.25-point lift from high-resolution evaluation, which only changes perception, is consistent with this split: roughly half of the LoRA model's errors are OCR-bound and respond directly to more legible inputs, while a meaningful tail still needs stronger question-grounded reasoning that resolution alone cannot fix.
 
+\subsection{Qualitative Findings}
+
+Six representative validation examples are reproduced as image-and-prediction panels in Appendix~B. Here we summarize the qualitative patterns they show.
+
+On short brand-name questions where the relevant text is clearly displayed (Q1: bottle brand, Q6: bank sponsor), Qwen reads the answer correctly across most variants, while BLIP-2 substitutes generic objects or hallucinated brand strings.
+
+On fine-grained perceptual cases (Q2: clock time, Q3: small bottle-label word, Q4: small price tag), every Qwen variant misreads the visible text. The high-resolution ablation does not always recover the right answer either: on Q2 it still predicts the wrong time, and on Q6 it actually substitutes ``wells fargo'' for the correct ``charles schwab.'' This suggests these failures need stronger question-conditioned grounding rather than only more pixels.
+
+The OCR-hint prompt occasionally pulls Qwen toward a nearby but wrong token (``Dewar's'' for the second bottle from the left, ``Aperitivo'' instead of ``barbieri''), showing that prefixing detected OCR tokens can mislead the model when several plausible tokens are visible.
+
+BLIP-2 LoRA outputs are typically on-topic but verbose, with repeated phrases and inserted units (Q1, Q3, Q4, Q6). This is the same failure mode quantified earlier as the soft-accuracy versus LLM-judge gap of roughly seven times the corresponding Qwen gap (Table~3). A prediction shown as ``(empty)'' in Appendix~B is the limit case of the same effect: BLIP-2 echoes the prompt without producing new content, so the post-processing that strips the echoed prompt and the trailing \texttt{Answer:} marker leaves the empty string.
+
+Taken together, these examples support the quantitative conclusion that closing the remaining accuracy gap on TextVQA needs both better text legibility and stronger question-grounded selection of which visible text to read, while BLIP-2 additionally needs answer-format supervision.
+
 \subsection{Summary}
 
 The strongest evidence from the experiments is that Qwen TextVQA performance improves through both adaptation and better visual resolution. LoRA fine-tuning provides a clear gain over zero-shot inference, full attention+MLP LoRA outperforms attention-only LoRA, and the high-resolution run produces the best overall validation accuracy. BLIP-2 performs much worse in this setup, which reinforces the model-selection decision to use Qwen as the primary system. The limited effect of OCR-only prompting suggests that the strongest model already understands the instruction to read text, but it still needs either task-specific adaptation or more legible visual inputs to answer reliably.
+
+\section{Reproducibility}
+
+The complete code for this project, including the data pipeline, model loading, LoRA training, inference, ablation runs, and result generation, is publicly available at \url{https://github.com/G6KlayWang/TEXTVQA}. The repository contains stage-specific entrypoints, versioned YAML configuration files for each model and run variant, and the scoring code used to produce every metric reported in this paper, so the numbers and figures here are reproducible end-to-end from a clean clone.
 
 \bibliographystyle{plain}
 \bibliography{refs}
@@ -319,7 +336,7 @@ Figure~\ref{fig:training-curve} shows the LoRA training loss and training-time e
 
 \section{Qualitative Examples}
 
-This appendix shows the six curated validation examples used in the qualitative comparison, each with the source image, question, majority human answer, and predictions from all completed Qwen and BLIP-2 runs. Long BLIP-2 outputs that contain repeated phrases are truncated with ``\ldots'' for readability; the underlying repetition pattern is the failure mode discussed in \S5.1.
+Each panel below shows one curated validation example: the source image, the question, the majority human answer, and the prediction from every completed Qwen and BLIP-2 run. Long BLIP-2 outputs that contain repeated phrases are truncated with ``\ldots'' for readability. A prediction shown as ``(empty)'' means the cleaned BLIP-2 output is the empty string, which happens when the model echoes the prompt without producing a new answer (see \S5.5). The qualitative patterns these examples illustrate are discussed in \S5.5.
 
 \begin{center}
 \begin{minipage}[t]{0.47\linewidth}
@@ -480,7 +497,5 @@ BLIP-2 OCR hint & (empty) \\
 \end{tabular}
 \end{minipage}
 \end{center}
-
-These six panels span the main qualitative patterns: Qwen reads short brand strings reliably (Q1, Q6), Qwen still misreads cluttered or fine-grained text (Q2, Q3, Q4), the OCR-hint prompt can pull Qwen toward a nearby but wrong token (Q1 ``Dewar's,'' Q3 ``Aperitivo''), the high-resolution run does not always help on fine-grained perception (Q2, Q6), and BLIP-2 LoRA produces verbose or repeated continuations that fail string normalization despite being on-topic (Q1, Q3, Q4, Q6), which is consistent with the soft-accuracy versus LLM-judge gap reported in Table~3.
 
 \end{document}
